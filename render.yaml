@@ -1,5 +1,4 @@
 # Render Blueprint - HM Consórcio CRM
-# Deploy automático: conecte o repositório GitHub ao Render
 # Docs: https://render.com/docs/blueprint-spec
 
 databases:
@@ -10,9 +9,7 @@ databases:
     region: oregon
 
 services:
-  # ========================================
   # Backend - FastAPI
-  # ========================================
   - type: web
     name: hm-consorcio-api
     runtime: docker
@@ -31,30 +28,20 @@ services:
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: 30
+        value: "30"
       - key: REFRESH_TOKEN_EXPIRE_DAYS
-        value: 7
+        value: "7"
       - key: DEBUG
-        value: false
+        value: "false"
       - key: CORS_ORIGINS
         value: https://hm-consorcio-web.onrender.com
 
-  # ========================================
-  # Frontend - React/Vite (Static Site)
-  # ========================================
+  # Frontend - React/Vite
   - type: web
     name: hm-consorcio-web
     runtime: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
     envVars:
       - key: VITE_API_URL
         value: https://hm-consorcio-api.onrender.com/api/v1
