@@ -115,60 +115,30 @@ async def seed_database(db: Session = Depends(get_db)):
     Popula o banco de dados com dados iniciais (executar apenas uma vez)
     """
     from app.core.security import get_password_hash
-    from app.models.unidade import Unidade
-    from app.models.empresa import Empresa
     from app.models.usuario import PerfilUsuario
 
-    # Verifica se já existe admin
-    existing_admin = db.query(Usuario).filter(Usuario.email == "admin@crmconsorcio.com.br").first()
-    if existing_admin:
-        return {"message": "Banco já foi populado", "admin_exists": True}
+    try:
+        # Verifica se já existe admin
+        existing_admin = db.query(Usuario).filter(Usuario.email == "admin@crmconsorcio.com.br").first()
+        if existing_admin:
+            return {"message": "Banco já foi populado", "admin_exists": True}
 
-    # Cria unidade matriz
-    matriz = Unidade(
-        nome="Matriz",
-        codigo="MTZ001",
-        endereco="Av. Principal, 1000",
-        cidade="São Paulo",
-        estado="SP",
-        cep="01310-100",
-        telefone="(11) 3000-0000",
-        email="matriz@hmcapital.com.br",
-        ativo=True
-    )
-    db.add(matriz)
-    db.flush()
+        # Cria usuário admin (sem unidade)
+        admin = Usuario(
+            nome="Administrador",
+            email="admin@crmconsorcio.com.br",
+            senha_hash=get_password_hash("admin123"),
+            perfil=PerfilUsuario.ADMIN,
+            ativo=True
+        )
+        db.add(admin)
+        db.commit()
 
-    # Cria empresa
-    empresa = Empresa(
-        razao_social="HM Capital Soluções Financeiras Ltda",
-        nome_fantasia="HM Capital",
-        cnpj="12.345.678/0001-90",
-        endereco="Av. Principal, 1000",
-        cidade="São Paulo",
-        estado="SP",
-        cep="01310-100",
-        telefone="(11) 3000-0000",
-        email="contato@hmcapital.com.br",
-        ativo=True
-    )
-    db.add(empresa)
-
-    # Cria usuário admin
-    admin = Usuario(
-        nome="Administrador",
-        email="admin@crmconsorcio.com.br",
-        senha_hash=get_password_hash("admin123"),
-        perfil=PerfilUsuario.ADMIN,
-        unidade_id=matriz.id,
-        ativo=True
-    )
-    db.add(admin)
-
-    db.commit()
-
-    return {
-        "message": "Banco populado com sucesso!",
-        "usuario": "admin@crmconsorcio.com.br",
-        "senha": "admin123"
-    }
+        return {
+            "message": "Admin criado com sucesso!",
+            "usuario": "admin@crmconsorcio.com.br",
+            "senha": "admin123"
+        }
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
