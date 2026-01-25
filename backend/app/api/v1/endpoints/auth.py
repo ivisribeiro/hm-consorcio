@@ -114,7 +114,7 @@ async def seed_database(db: Session = Depends(get_db)):
     """
     Popula o banco de dados com dados iniciais (executar apenas uma vez)
     """
-    from app.core.security import get_password_hash
+    from passlib.context import CryptContext
     from app.models.usuario import PerfilUsuario
 
     try:
@@ -123,11 +123,16 @@ async def seed_database(db: Session = Depends(get_db)):
         if existing_admin:
             return {"message": "Banco já foi populado", "admin_exists": True}
 
+        # Hash da senha diretamente
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        senha = "admin123"
+        senha_hash = pwd_context.hash(senha[:72])  # Trunca para 72 bytes
+
         # Cria usuário admin (sem unidade)
         admin = Usuario(
             nome="Administrador",
             email="admin@crmconsorcio.com.br",
-            senha_hash=get_password_hash("admin123"),
+            senha_hash=senha_hash,
             perfil=PerfilUsuario.ADMIN,
             ativo=True
         )
@@ -141,4 +146,4 @@ async def seed_database(db: Session = Depends(get_db)):
         }
     except Exception as e:
         db.rollback()
-        return {"error": str(e)}
+        return {"error": str(e), "type": str(type(e).__name__)}
