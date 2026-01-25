@@ -117,6 +117,7 @@ async def seed_database(db: Session = Depends(get_db)):
     from app.core.security import get_password_hash
     from app.models.unidade import Unidade
     from app.models.empresa import Empresa
+    from app.models.usuario import PerfilUsuario
 
     # Verifica se já existe admin
     existing_admin = db.query(Usuario).filter(Usuario.email == "admin@crmconsorcio.com.br").first()
@@ -158,7 +159,7 @@ async def seed_database(db: Session = Depends(get_db)):
         nome="Administrador",
         email="admin@crmconsorcio.com.br",
         senha_hash=get_password_hash("admin123"),
-        perfil="admin",
+        perfil=PerfilUsuario.ADMIN,
         unidade_id=matriz.id,
         ativo=True
     )
