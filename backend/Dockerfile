@@ -18,11 +18,14 @@ COPY . .
 # Cria diretório para arquivos estáticos
 RUN mkdir -p /app/static/images
 
+# Torna o script de startup executável
+RUN chmod +x /app/start.sh
+
 # Define variável de ambiente para porta
 ENV PORT=8000
 
 # Expõe a porta
 EXPOSE $PORT
 
-# Comando de produção
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+# Comando de produção (executa migrations e inicia servidor)
+CMD ["/app/start.sh"]
