@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Card, Descriptions, Tag, Button, Space, Steps, message, Spin, Modal,
-  Input, Row, Col, Timeline, Divider, Typography, Alert, Select
+  Input, Row, Col, Timeline, Divider, Typography, Alert, Tooltip
 } from 'antd'
 import {
   ArrowLeftOutlined, CheckOutlined, CloseOutlined, SendOutlined,
   FileTextOutlined, EditOutlined, SafetyCertificateOutlined,
   CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined,
-  FilePdfOutlined
+  FilePdfOutlined, RollbackOutlined, ArrowRightOutlined, UserOutlined
 } from '@ant-design/icons'
-import { beneficiosApi, administradorasApi } from '../../api/beneficios'
+import { beneficiosApi } from '../../api/beneficios'
 import { clientesApi } from '../../api/clientes'
 import { relatoriosApi } from '../../api/relatorios'
 
@@ -57,7 +57,7 @@ const BeneficioDetail = () => {
   const { id } = useParams()
   const [beneficio, setBeneficio] = useState(null)
   const [cliente, setCliente] = useState(null)
-  const [administradoras, setAdministradoras] = useState([])
+  const [historico, setHistorico] = useState([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
@@ -70,7 +70,6 @@ const BeneficioDetail = () => {
   // Form fields
   const [grupo, setGrupo] = useState('')
   const [cota, setCota] = useState('')
-  const [administradoraId, setAdministradoraId] = useState(null)
   const [motivoRejeicao, setMotivoRejeicao] = useState('')
   const [motivoCancelamento, setMotivoCancelamento] = useState('')
 
@@ -81,12 +80,12 @@ const BeneficioDetail = () => {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [beneficioData, adminsData] = await Promise.all([
+      const [beneficioData, historicoData] = await Promise.all([
         beneficiosApi.get(id),
-        administradorasApi.list()
+        beneficiosApi.getHistorico(id)
       ])
       setBeneficio(beneficioData)
-      setAdministradoras(adminsData)
+      setHistorico(historicoData)
 
       const clienteData = await clientesApi.get(beneficioData.cliente_id)
       setCliente(clienteData)
@@ -137,27 +136,22 @@ const BeneficioDetail = () => {
     }
   }
 
-  const handleCadastroAdministradora = async () => {
+  const handleCadastroGrupoCota = async () => {
     if (!grupo || !cota) {
       message.error('Informe o grupo e a cota')
       return
     }
     setUpdating(true)
     try {
-      await beneficiosApi.update(id, {
-        grupo,
-        cota,
-        administradora_id: administradoraId
-      })
+      await beneficiosApi.update(id, { grupo, cota })
       await beneficiosApi.updateStatus(id, { status: 'cadastrado' })
-      message.success('Cadastro na administradora realizado!')
+      message.success('Grupo e cota registrados com sucesso!')
       setCadastroModal(false)
       setGrupo('')
       setCota('')
-      setAdministradoraId(null)
       loadData()
     } catch (error) {
-      message.error('Erro ao registrar cadastro')
+      message.error('Erro ao registrar grupo e cota')
     } finally {
       setUpdating(false)
     }
@@ -181,13 +175,27 @@ const BeneficioDetail = () => {
     }).format(value || 0)
   }
 
-  // Monta o timeline de eventos
-  const getTimeline = () => {
-    if (!beneficio) return []
+  // Cores e labels para ações do histórico
+  const acaoColors = {
+    avancou: 'green',
+    voltou: 'orange',
+    rejeitou: 'red',
+    cancelou: 'red',
+  }
 
+  const acaoLabels = {
+    avancou: 'Avançou',
+    voltou: 'Voltou',
+    rejeitou: 'Rejeitou',
+    cancelou: 'Cancelou',
+  }
+
+  // Monta o timeline de eventos a partir do histórico
+  const getTimeline = () => {
     const events = []
 
-    if (beneficio.created_at) {
+    // Evento de criação do benefício
+    if (beneficio?.created_at) {
       events.push({
         color: 'blue',
         children: (
@@ -200,148 +208,76 @@ const BeneficioDetail = () => {
       })
     }
 
-    if (beneficio.data_proposta) {
-      events.push({
-        color: 'blue',
-        children: (
-          <>
-            <Text strong>Proposta enviada ao cliente</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_proposta)}</Text>
-          </>
-        ),
-      })
-    }
+    // Histórico de mudanças de status (invertido pois vem desc da API)
+    const historicoOrdenado = [...historico].reverse()
 
-    if (beneficio.data_aceite) {
-      events.push({
-        color: 'green',
-        children: (
-          <>
-            <Text strong>Cliente aceitou a proposta</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_aceite)}</Text>
-          </>
-        ),
-      })
-    }
+    historicoOrdenado.forEach((h) => {
+      const color = acaoColors[h.acao] || 'blue'
+      const statusAnteriorLabel = h.status_anterior ? statusLabels[h.status_anterior] : '-'
+      const statusNovoLabel = statusLabels[h.status_novo] || h.status_novo
 
-    if (beneficio.data_rejeicao) {
       events.push({
-        color: 'red',
+        color,
         children: (
           <>
-            <Text strong>Proposta rejeitada pelo cliente</Text>
+            <Text strong>
+              {acaoLabels[h.acao] || h.acao}: {statusAnteriorLabel} {'->'} {statusNovoLabel}
+            </Text>
             <br />
-            <Text type="secondary">{formatDate(beneficio.data_rejeicao)}</Text>
-            {beneficio.motivo_rejeicao && (
+            <Space size="small">
+              <UserOutlined style={{ fontSize: 12 }} />
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {h.usuario_nome || 'Sistema'}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                | {formatDate(h.created_at)}
+              </Text>
+            </Space>
+            {h.observacao && (
               <>
                 <br />
-                <Text type="danger">Motivo: {beneficio.motivo_rejeicao}</Text>
+                <Text type="danger" style={{ fontSize: 12 }}>Motivo: {h.observacao}</Text>
               </>
             )}
           </>
         ),
       })
-    }
-
-    if (beneficio.data_contrato) {
-      events.push({
-        color: 'orange',
-        children: (
-          <>
-            <Text strong>Contrato gerado</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_contrato)}</Text>
-          </>
-        ),
-      })
-    }
-
-    if (beneficio.data_assinatura_contrato) {
-      events.push({
-        color: 'cyan',
-        children: (
-          <>
-            <Text strong>Contrato assinado</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_assinatura_contrato)}</Text>
-          </>
-        ),
-      })
-    }
-
-    if (beneficio.data_cadastro_administradora) {
-      events.push({
-        color: 'purple',
-        children: (
-          <>
-            <Text strong>Cadastrado na administradora</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_cadastro_administradora)}</Text>
-            {beneficio.grupo && beneficio.cota && (
-              <>
-                <br />
-                <Text>Grupo: {beneficio.grupo} | Cota: {beneficio.cota}</Text>
-              </>
-            )}
-          </>
-        ),
-      })
-    }
-
-    if (beneficio.data_termo) {
-      events.push({
-        color: 'geekblue',
-        children: (
-          <>
-            <Text strong>Termo de adesão gerado</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_termo)}</Text>
-          </>
-        ),
-      })
-    }
-
-    if (beneficio.data_ativacao) {
-      events.push({
-        color: 'green',
-        children: (
-          <>
-            <Text strong>Benefício ativado</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_ativacao)}</Text>
-          </>
-        ),
-      })
-    }
-
-    if (beneficio.data_cancelamento) {
-      events.push({
-        color: 'red',
-        children: (
-          <>
-            <Text strong>Benefício cancelado</Text>
-            <br />
-            <Text type="secondary">{formatDate(beneficio.data_cancelamento)}</Text>
-            {beneficio.motivo_cancelamento && (
-              <>
-                <br />
-                <Text type="danger">Motivo: {beneficio.motivo_cancelamento}</Text>
-              </>
-            )}
-          </>
-        ),
-      })
-    }
+    })
 
     return events
+  }
+
+  // Mapa de status anterior para poder voltar
+  const previousStatus = {
+    proposto: 'rascunho',
+    aceito: 'proposto',
+    contrato_gerado: 'aceito',
+    contrato_assinado: 'contrato_gerado',
+    aguardando_cadastro: 'contrato_assinado',
+    cadastrado: 'aguardando_cadastro',
+    termo_gerado: 'cadastrado',
   }
 
   const getActionButtons = () => {
     if (!beneficio) return null
 
     const buttons = []
+    const prevStatus = previousStatus[beneficio.status]
+
+    // Botão de voltar (se não for rascunho ou status final)
+    if (prevStatus && !['ativo', 'cancelado', 'rejeitado'].includes(beneficio.status)) {
+      buttons.push(
+        <Tooltip key="voltar" title={`Voltar para ${statusLabels[prevStatus]}`}>
+          <Button
+            icon={<RollbackOutlined />}
+            onClick={() => handleStatusUpdate(prevStatus)}
+            loading={updating}
+          >
+            Voltar
+          </Button>
+        </Tooltip>
+      )
+    }
 
     switch (beneficio.status) {
       case 'rascunho':
@@ -349,7 +285,7 @@ const BeneficioDetail = () => {
           <Button
             key="propor"
             type="primary"
-            icon={<SendOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => handleStatusUpdate('proposto')}
             loading={updating}
           >
@@ -363,7 +299,7 @@ const BeneficioDetail = () => {
           <Button
             key="aceitar"
             type="primary"
-            icon={<CheckOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => handleStatusUpdate('aceito')}
             loading={updating}
           >
@@ -386,7 +322,7 @@ const BeneficioDetail = () => {
           <Button
             key="contrato"
             type="primary"
-            icon={<FileTextOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => handleStatusUpdate('contrato_gerado')}
             loading={updating}
           >
@@ -400,7 +336,7 @@ const BeneficioDetail = () => {
           <Button
             key="assinar"
             type="primary"
-            icon={<EditOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => handleStatusUpdate('contrato_assinado')}
             loading={updating}
           >
@@ -414,7 +350,7 @@ const BeneficioDetail = () => {
           <Button
             key="admin"
             type="primary"
-            icon={<SendOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => handleStatusUpdate('aguardando_cadastro')}
             loading={updating}
           >
@@ -428,7 +364,7 @@ const BeneficioDetail = () => {
           <Button
             key="cadastro"
             type="primary"
-            icon={<SafetyCertificateOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => setCadastroModal(true)}
             loading={updating}
           >
@@ -442,7 +378,7 @@ const BeneficioDetail = () => {
           <Button
             key="termo"
             type="primary"
-            icon={<FileTextOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => handleStatusUpdate('termo_gerado')}
             loading={updating}
           >
@@ -642,27 +578,17 @@ const BeneficioDetail = () => {
         )}
       </Card>
 
-      {/* Modal de Cadastro na Administradora */}
+      {/* Modal de Registro de Grupo e Cota */}
       <Modal
-        title="Cadastro na Administradora"
+        title="Registrar Grupo e Cota"
         open={cadastroModal}
-        onOk={handleCadastroAdministradora}
+        onOk={handleCadastroGrupoCota}
         onCancel={() => setCadastroModal(false)}
         confirmLoading={updating}
-        okText="Confirmar Cadastro"
+        okText="Confirmar"
       >
-        <p>Informe os dados retornados pela administradora:</p>
+        <p>Informe os dados recebidos da administradora:</p>
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <div>
-            <Text type="secondary">Administradora</Text>
-            <Select
-              placeholder="Selecione a administradora"
-              style={{ width: '100%' }}
-              value={administradoraId}
-              onChange={setAdministradoraId}
-              options={administradoras.map(a => ({ value: a.id, label: a.nome }))}
-            />
-          </div>
           <div>
             <Text type="secondary">Grupo</Text>
             <Input

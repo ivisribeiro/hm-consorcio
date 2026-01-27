@@ -17,6 +17,8 @@ import {
   SafetyCertificateOutlined,
   ApartmentOutlined,
   FilePdfOutlined,
+  IdcardOutlined,
+  SolutionOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -38,11 +40,6 @@ const menuItems = [
     key: '/beneficios',
     icon: <GiftOutlined />,
     label: 'Benefícios',
-  },
-  {
-    key: '/contratos',
-    icon: <FileTextOutlined />,
-    label: 'Contratos',
   },
   {
     key: '/relatorios',
@@ -68,6 +65,16 @@ const menuItems = [
         key: '/empresas',
         icon: <ShopOutlined />,
         label: 'Empresas',
+      },
+      {
+        key: '/representantes',
+        icon: <IdcardOutlined />,
+        label: 'Representantes',
+      },
+      {
+        key: '/consultores',
+        icon: <SolutionOutlined />,
+        label: 'Consultores',
       },
       {
         key: '/tabelas-credito',

@@ -11,11 +11,11 @@ import BeneficioDetail from './pages/Beneficios/BeneficioDetail'
 import UsuariosList from './pages/Usuarios'
 import UnidadesList from './pages/Unidades'
 import EmpresasList from './pages/Empresas'
+import RepresentantesList from './pages/Representantes'
+import ConsultoresList from './pages/Consultores'
 import TabelasCreditoList from './pages/TabelasCredito'
 import AdministradorasList from './pages/Administradoras'
 import Relatorios from './pages/Relatorios'
-import ContratosList from './pages/Contratos'
-import ContratoDetail from './pages/Contratos/ContratoDetail'
 import Configuracoes from './pages/Configuracoes'
 
 const ProtectedRoute = ({ children }) => {
@@ -56,15 +56,13 @@ function App() {
         <Route path="usuarios" element={<UsuariosList />} />
         <Route path="unidades" element={<UnidadesList />} />
         <Route path="empresas" element={<EmpresasList />} />
+        <Route path="representantes" element={<RepresentantesList />} />
+        <Route path="consultores" element={<ConsultoresList />} />
         <Route path="tabelas-credito" element={<TabelasCreditoList />} />
         <Route path="administradoras" element={<AdministradorasList />} />
 
         {/* Relatórios */}
         <Route path="relatorios" element={<Relatorios />} />
-
-        {/* Contratos */}
-        <Route path="contratos" element={<ContratosList />} />
-        <Route path="contratos/:id" element={<ContratoDetail />} />
 
         {/* Configuracoes */}
         <Route path="configuracoes" element={<Configuracoes />} />

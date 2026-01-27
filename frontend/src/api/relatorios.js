@@ -1,9 +1,17 @@
 import apiClient from './client'
 
 export const relatoriosApi = {
-  // Gera PDF do cliente
+  // Gera PDF do cliente (antigo)
   gerarPdfCliente: async (clienteId) => {
     const response = await apiClient.get(`/relatorios/cliente/${clienteId}/pdf`, {
+      responseType: 'blob'
+    })
+    return response.data
+  },
+
+  // Gera PDF da Ficha de Atendimento (novo - 3 páginas)
+  gerarFichaAtendimento: async (clienteId) => {
+    const response = await apiClient.get(`/relatorios/ficha-atendimento/${clienteId}/pdf`, {
       responseType: 'blob'
     })
     return response.data

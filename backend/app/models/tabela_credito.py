@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -19,6 +20,10 @@ class TabelaCredito(Base):
     qtd_participantes = Column(Integer, default=4076)
     tipo_plano = Column(String(50), default="Normal")
     ativo = Column(Boolean, default=True)
+
+    # Relacionamento com Administradora
+    administradora_id = Column(Integer, ForeignKey("administradoras.id"), nullable=True, index=True)
+    administradora = relationship("Administradora", back_populates="tabelas_credito")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

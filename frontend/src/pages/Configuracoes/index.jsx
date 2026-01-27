@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Card, Tabs, Form, Input, Switch, Button, message, Spin, Row, Col, Typography, InputNumber, ColorPicker } from 'antd'
-import { SaveOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Card, Tabs, Form, Input, Switch, Button, message, Spin, Row, Col, Typography, InputNumber, ColorPicker, Table, Checkbox, Tag, Modal, Space, Popconfirm } from 'antd'
+import { SaveOutlined, ReloadOutlined, SafetyCertificateOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { configuracoesApi } from '../../api/configuracoes'
+import { perfisApi } from '../../api/permissoes'
 
 const { Title } = Typography
 
@@ -11,9 +12,22 @@ const Configuracoes = () => {
   const [empresaForm] = Form.useForm()
   const [pdfForm] = Form.useForm()
   const [sistemaForm] = Form.useForm()
+  const [perfilForm] = Form.useForm()
+
+  // Permissões
+  const [permissoes, setPermissoes] = useState([])
+  const [perfis, setPerfis] = useState([])
+  const [matriz, setMatriz] = useState({})
+  const [loadingPermissoes, setLoadingPermissoes] = useState(false)
+  const [savingPermissoes, setSavingPermissoes] = useState(false)
+
+  // Modal de novo perfil
+  const [modalVisible, setModalVisible] = useState(false)
+  const [editingPerfil, setEditingPerfil] = useState(null)
 
   useEffect(() => {
     loadSettings()
+    loadPermissoes()
   }, [])
 
   const loadSettings = async () => {
@@ -35,6 +49,125 @@ const Configuracoes = () => {
       message.error('Erro ao carregar configuracoes')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadPermissoes = async () => {
+    setLoadingPermissoes(true)
+    try {
+      const data = await perfisApi.getMatriz()
+      setPermissoes(data.permissoes || [])
+      setPerfis(data.perfis || [])
+      setMatriz(data.matriz || {})
+    } catch (error) {
+      // Se não tem permissões, tenta criar
+      if (error.response?.status === 404 || permissoes.length === 0) {
+        try {
+          await perfisApi.seed()
+          const data = await perfisApi.getMatriz()
+          setPermissoes(data.permissoes || [])
+          setPerfis(data.perfis || [])
+          setMatriz(data.matriz || {})
+        } catch (seedError) {
+          console.error('Erro ao criar permissões padrão:', seedError)
+        }
+      }
+    } finally {
+      setLoadingPermissoes(false)
+    }
+  }
+
+  const handlePermissaoChange = (perfilId, codigo, checked) => {
+    setMatriz(prev => {
+      const perfilPermissoes = prev[perfilId] || []
+      if (checked) {
+        return { ...prev, [perfilId]: [...perfilPermissoes, codigo] }
+      } else {
+        return { ...prev, [perfilId]: perfilPermissoes.filter(p => p !== codigo) }
+      }
+    })
+  }
+
+  const handleSavePermissoes = async (perfilId) => {
+    setSavingPermissoes(true)
+    try {
+      await perfisApi.updatePermissoes(perfilId, matriz[perfilId] || [])
+      const perfil = perfis.find(p => p.id === perfilId)
+      message.success(`Permissões do perfil ${perfil?.nome || perfilId} salvas com sucesso`)
+    } catch (error) {
+      message.error('Erro ao salvar permissões')
+    } finally {
+      setSavingPermissoes(false)
+    }
+  }
+
+  const handleSeedPermissoes = async () => {
+    try {
+      await perfisApi.seed()
+      message.success('Permissões padrão criadas')
+      loadPermissoes()
+    } catch (error) {
+      message.error('Erro ao criar permissões padrão')
+    }
+  }
+
+  const handleNovoPerfil = () => {
+    setEditingPerfil(null)
+    perfilForm.resetFields()
+    perfilForm.setFieldsValue({ cor: '#1890ff' })
+    setModalVisible(true)
+  }
+
+  const handleEditPerfil = async (perfil) => {
+    setEditingPerfil(perfil)
+    try {
+      const perfilCompleto = await perfisApi.get(perfil.id)
+      perfilForm.setFieldsValue({
+        codigo: perfilCompleto.codigo,
+        nome: perfilCompleto.nome,
+        descricao: perfilCompleto.descricao,
+        cor: perfilCompleto.cor,
+      })
+      setModalVisible(true)
+    } catch (error) {
+      message.error('Erro ao carregar perfil')
+    }
+  }
+
+  const handleDeletePerfil = async (perfilId) => {
+    try {
+      await perfisApi.delete(perfilId)
+      message.success('Perfil excluído com sucesso')
+      loadPermissoes()
+    } catch (error) {
+      message.error(error.response?.data?.detail || 'Erro ao excluir perfil')
+    }
+  }
+
+  const handleSavePerfil = async (values) => {
+    setSaving(true)
+    try {
+      // Converter cor para string hex se necessario
+      const data = {
+        ...values,
+        cor: typeof values.cor === 'object' ? values.cor.toHexString() : values.cor,
+      }
+
+      if (editingPerfil) {
+        await perfisApi.update(editingPerfil.id, data)
+        message.success('Perfil atualizado com sucesso')
+      } else {
+        await perfisApi.create(data)
+        message.success('Perfil criado com sucesso')
+      }
+
+      setModalVisible(false)
+      perfilForm.resetFields()
+      loadPermissoes()
+    } catch (error) {
+      message.error(error.response?.data?.detail || 'Erro ao salvar perfil')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -228,6 +361,114 @@ const Configuracoes = () => {
         </Form>
       ),
     },
+    {
+      key: 'permissoes',
+      label: (
+        <span>
+          <SafetyCertificateOutlined /> Perfis e Permissões
+        </span>
+      ),
+      children: (
+        <div>
+          {loadingPermissoes ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 50 }}>
+              <Spin />
+            </div>
+          ) : permissoes.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 50 }}>
+              <p>Nenhuma permissão cadastrada.</p>
+              <Button type="primary" onClick={handleSeedPermissoes}>
+                Criar Permissões Padrão
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  {perfis.map(perfil => (
+                    <Tag key={perfil.id} color={perfil.cor || 'blue'}>
+                      {perfil.nome}
+                    </Tag>
+                  ))}
+                </div>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleNovoPerfil}>
+                  Novo Perfil
+                </Button>
+              </div>
+
+              <Table
+                dataSource={permissoes}
+                rowKey="codigo"
+                pagination={false}
+                size="small"
+                scroll={{ x: 800 }}
+                columns={[
+                  {
+                    title: 'Módulo',
+                    dataIndex: 'modulo',
+                    key: 'modulo',
+                    width: 120,
+                    render: (modulo) => (
+                      <Tag color="default" style={{ textTransform: 'capitalize' }}>
+                        {modulo}
+                      </Tag>
+                    ),
+                    filters: [...new Set(permissoes.map(p => p.modulo))].map(m => ({ text: m, value: m })),
+                    onFilter: (value, record) => record.modulo === value,
+                  },
+                  {
+                    title: 'Permissão',
+                    dataIndex: 'nome',
+                    key: 'nome',
+                    width: 200,
+                  },
+                  ...perfis.map(perfil => ({
+                    title: (
+                      <Space>
+                        <span style={{ color: perfil.cor }}>{perfil.nome}</span>
+                        {!perfil.is_system && (
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<EditOutlined />}
+                            onClick={() => handleEditPerfil(perfil)}
+                          />
+                        )}
+                      </Space>
+                    ),
+                    key: perfil.id,
+                    width: 150,
+                    align: 'center',
+                    render: (_, record) => (
+                      <Checkbox
+                        checked={(matriz[perfil.id] || []).includes(record.codigo)}
+                        onChange={(e) => handlePermissaoChange(perfil.id, record.codigo, e.target.checked)}
+                        disabled={perfil.codigo === 'admin'}
+                      />
+                    ),
+                  })),
+                ]}
+              />
+
+              <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {perfis.filter(p => p.codigo !== 'admin').map(perfil => (
+                  <Button
+                    key={perfil.id}
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    loading={savingPermissoes}
+                    onClick={() => handleSavePermissoes(perfil.id)}
+                    style={{ backgroundColor: perfil.cor, borderColor: perfil.cor }}
+                  >
+                    Salvar {perfil.nome}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ),
+    },
   ]
 
   return (
@@ -242,6 +483,64 @@ const Configuracoes = () => {
       <Card>
         <Tabs items={items} />
       </Card>
+
+      <Modal
+        title={editingPerfil ? 'Editar Perfil' : 'Novo Perfil'}
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Form form={perfilForm} layout="vertical" onFinish={handleSavePerfil}>
+          <Form.Item
+            name="codigo"
+            label="Código"
+            rules={[{ required: true, message: 'Obrigatório' }]}
+          >
+            <Input placeholder="meu_perfil" disabled={!!editingPerfil} />
+          </Form.Item>
+          <Form.Item
+            name="nome"
+            label="Nome"
+            rules={[{ required: true, message: 'Obrigatório' }]}
+          >
+            <Input placeholder="Meu Perfil Customizado" />
+          </Form.Item>
+          <Form.Item name="descricao" label="Descrição">
+            <Input.TextArea rows={2} placeholder="Descrição do perfil" />
+          </Form.Item>
+          <Form.Item name="cor" label="Cor">
+            <ColorPicker format="hex" />
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {editingPerfil && !editingPerfil.is_system && (
+              <Popconfirm
+                title="Excluir perfil?"
+                description="Esta ação não pode ser desfeita."
+                onConfirm={() => {
+                  handleDeletePerfil(editingPerfil.id)
+                  setModalVisible(false)
+                }}
+                okText="Sim"
+                cancelText="Não"
+              >
+                <Button danger icon={<DeleteOutlined />}>
+                  Excluir
+                </Button>
+              </Popconfirm>
+            )}
+            <div style={{ marginLeft: 'auto' }}>
+              <Button onClick={() => setModalVisible(false)} style={{ marginRight: 8 }}>
+                Cancelar
+              </Button>
+              <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving}>
+                Salvar
+              </Button>
+            </div>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

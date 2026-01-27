@@ -7,8 +7,8 @@ from decimal import Decimal
 TipoBem = Literal["imovel", "carro", "moto"]
 StatusBeneficio = Literal[
     "rascunho", "proposto", "aceito", "rejeitado",
-    "contrato_gerado", "contrato_assinado", "cadastro_administradora",
-    "termo_gerado", "termo_assinado", "ativado", "cancelado"
+    "contrato_gerado", "contrato_assinado", "aguardando_cadastro",
+    "cadastrado", "termo_gerado", "ativo", "cancelado"
 ]
 
 
@@ -118,6 +118,7 @@ class TabelaCreditoBase(BaseModel):
     indice_correcao: str = "INCC"
     qtd_participantes: int = 4076
     tipo_plano: str = "Normal"
+    administradora_id: Optional[int] = None
 
 
 class TabelaCreditoCreate(TabelaCreditoBase):
@@ -136,16 +137,32 @@ class TabelaCreditoUpdate(BaseModel):
     indice_correcao: Optional[str] = None
     qtd_participantes: Optional[int] = None
     tipo_plano: Optional[str] = None
+    administradora_id: Optional[int] = None
     ativo: Optional[bool] = None
+
+
+class AdministradoraSimples(BaseModel):
+    id: int
+    nome: str
+
+    class Config:
+        from_attributes = True
 
 
 class TabelaCreditoResponse(TabelaCreditoBase):
     id: int
     ativo: bool
+    administradora: Optional[AdministradoraSimples] = None
     created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class TabelaCreditoImportResult(BaseModel):
+    total: int
+    importados: int
+    erros: list[str]
 
 
 class AdministradoraBase(BaseModel):
@@ -197,3 +214,28 @@ class SimulacaoRequest(BaseModel):
 
 class SimulacaoResponse(BaseModel):
     tabelas: list[TabelaCreditoResponse]
+
+
+# ==================== HISTÓRICO ====================
+
+class UsuarioSimples(BaseModel):
+    id: int
+    nome: str
+
+    class Config:
+        from_attributes = True
+
+
+class BeneficioHistoricoResponse(BaseModel):
+    id: int
+    beneficio_id: int
+    usuario_id: int
+    usuario_nome: Optional[str] = None
+    status_anterior: Optional[str] = None
+    status_novo: str
+    acao: str
+    observacao: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

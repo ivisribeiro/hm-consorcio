@@ -3,10 +3,11 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.core.database import get_db
-from app.core.security import get_current_user, check_permission
-from app.models.usuario import Usuario, PerfilUsuario
+from app.core.security import get_current_user
+from app.models.usuario import Usuario
 from app.models.empresa import Empresa
 from app.schemas.empresa import EmpresaCreate, EmpresaUpdate, EmpresaResponse
+from app.api.v1.endpoints.perfis import check_permission
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
@@ -30,7 +31,7 @@ async def list_empresas(
 async def create_empresa(
     empresa_data: EmpresaCreate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(check_permission([PerfilUsuario.ADMIN, PerfilUsuario.GERENTE]))
+    current_user: Usuario = Depends(check_permission("cadastros.empresas"))
 ):
     """Cria uma nova empresa"""
     existing = db.query(Empresa).filter(Empresa.cnpj == empresa_data.cnpj).first()
@@ -62,7 +63,7 @@ async def update_empresa(
     empresa_id: int,
     empresa_data: EmpresaUpdate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(check_permission([PerfilUsuario.ADMIN, PerfilUsuario.GERENTE]))
+    current_user: Usuario = Depends(check_permission("cadastros.empresas"))
 ):
     """Atualiza uma empresa"""
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
@@ -82,7 +83,7 @@ async def update_empresa(
 async def delete_empresa(
     empresa_id: int,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(check_permission([PerfilUsuario.ADMIN]))
+    current_user: Usuario = Depends(check_permission("cadastros.empresas"))
 ):
     """Desativa uma empresa"""
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()

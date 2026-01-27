@@ -3,9 +3,19 @@ from typing import Optional
 from datetime import datetime
 
 
+class EmpresaSimples(BaseModel):
+    id: int
+    razao_social: str
+    nome_fantasia: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class UnidadeBase(BaseModel):
     nome: str
     codigo: str
+    empresa_id: Optional[int] = None
     endereco: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
@@ -21,6 +31,7 @@ class UnidadeCreate(UnidadeBase):
 class UnidadeUpdate(BaseModel):
     nome: Optional[str] = None
     codigo: Optional[str] = None
+    empresa_id: Optional[int] = None
     endereco: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
@@ -33,6 +44,7 @@ class UnidadeUpdate(BaseModel):
 class UnidadeResponse(UnidadeBase):
     id: int
     ativo: bool
+    empresa: Optional[EmpresaSimples] = None
     created_at: Optional[datetime] = None
 
     class Config:

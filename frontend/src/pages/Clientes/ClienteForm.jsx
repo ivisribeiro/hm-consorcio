@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Form, Input, Button, Card, Row, Col, Select, DatePicker,
-  Radio, Switch, message, Spin, Divider, Collapse
+  Radio, Switch, message, Spin, Divider, Collapse, Space
 } from 'antd'
-import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import { SaveOutlined, ArrowLeftOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { clientesApi, unidadesApi, empresasApi } from '../../api/clientes'
+import { relatoriosApi } from '../../api/relatorios'
 import CPFInput from '../../components/forms/CPFInput'
 import CEPInput from '../../components/forms/CEPInput'
 import PhoneInput from '../../components/forms/PhoneInput'
@@ -21,8 +22,10 @@ const ClienteForm = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [unidades, setUnidades] = useState([])
   const [empresas, setEmpresas] = useState([])
+  const [clienteNome, setClienteNome] = useState('')
 
   const isEdit = !!id
 
@@ -50,6 +53,7 @@ const ClienteForm = () => {
     setLoading(true)
     try {
       const data = await clientesApi.get(id)
+      setClienteNome(data.nome || '')
       form.setFieldsValue({
         ...data,
         data_nascimento: data.data_nascimento ? dayjs(data.data_nascimento) : null,
@@ -61,6 +65,20 @@ const ClienteForm = () => {
       navigate('/clientes')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDownloadFicha = async () => {
+    setDownloadingPdf(true)
+    try {
+      const blob = await relatoriosApi.gerarFichaAtendimento(id)
+      const nomeArquivo = `ficha_${clienteNome.replace(/\s+/g, '_').toLowerCase()}_${id}.pdf`
+      relatoriosApi.downloadPdf(blob, nomeArquivo)
+      message.success('Ficha de Atendimento gerada com sucesso!')
+    } catch (error) {
+      message.error('Erro ao gerar Ficha de Atendimento')
+    } finally {
+      setDownloadingPdf(false)
     }
   }
 
@@ -461,9 +479,22 @@ const ClienteForm = () => {
     <Card
       title={isEdit ? 'Editar Cliente' : 'Novo Cliente'}
       extra={
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/clientes')}>
-          Voltar
-        </Button>
+        <Space>
+          {isEdit && (
+            <Button
+              icon={<FilePdfOutlined />}
+              onClick={handleDownloadFicha}
+              loading={downloadingPdf}
+              type="primary"
+              ghost
+            >
+              Ficha de Atendimento
+            </Button>
+          )}
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/clientes')}>
+            Voltar
+          </Button>
+        </Space>
       }
     >
       <Form

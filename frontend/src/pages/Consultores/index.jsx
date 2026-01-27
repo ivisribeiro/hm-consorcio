@@ -1,62 +1,57 @@
 import { useState, useEffect } from 'react'
 import { Table, Button, Space, Card, Tag, message, Popconfirm, Modal, Form, Input, Select } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { unidadesApi } from '../../api/unidades'
-import { empresasApi } from '../../api/empresas'
+import { consultoresApi } from '../../api/consultores'
+import { representantesApi } from '../../api/representantes'
 
-const estados = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
-  'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-]
-
-const UnidadesList = () => {
-  const [unidades, setUnidades] = useState([])
-  const [empresas, setEmpresas] = useState([])
+const ConsultoresList = () => {
+  const [consultores, setConsultores] = useState([])
+  const [representantes, setRepresentantes] = useState([])
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingUnidade, setEditingUnidade] = useState(null)
+  const [editingConsultor, setEditingConsultor] = useState(null)
   const [form] = Form.useForm()
 
-  const fetchUnidades = async () => {
+  const fetchConsultores = async () => {
     setLoading(true)
     try {
-      const data = await unidadesApi.list()
-      setUnidades(data)
+      const data = await consultoresApi.list()
+      setConsultores(data)
     } catch (error) {
-      message.error('Erro ao carregar unidades')
+      message.error('Erro ao carregar consultores')
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchEmpresas = async () => {
+  const fetchRepresentantes = async () => {
     try {
-      const data = await empresasApi.list()
-      setEmpresas(data)
+      const data = await representantesApi.list()
+      setRepresentantes(data)
     } catch (error) {
-      message.error('Erro ao carregar empresas')
+      message.error('Erro ao carregar representantes')
     }
   }
 
   useEffect(() => {
-    fetchUnidades()
-    fetchEmpresas()
+    fetchConsultores()
+    fetchRepresentantes()
   }, [])
 
   const handleDelete = async (id) => {
     try {
-      await unidadesApi.delete(id)
-      message.success('Unidade desativada com sucesso')
-      fetchUnidades()
+      await consultoresApi.delete(id)
+      message.success('Consultor desativado com sucesso')
+      fetchConsultores()
     } catch (error) {
-      message.error('Erro ao desativar unidade')
+      message.error('Erro ao desativar consultor')
     }
   }
 
-  const handleOpenModal = (unidade = null) => {
-    setEditingUnidade(unidade)
-    if (unidade) {
-      form.setFieldsValue(unidade)
+  const handleOpenModal = (consultor = null) => {
+    setEditingConsultor(consultor)
+    if (consultor) {
+      form.setFieldsValue(consultor)
     } else {
       form.resetFields()
     }
@@ -65,33 +60,27 @@ const UnidadesList = () => {
 
   const handleCloseModal = () => {
     setModalOpen(false)
-    setEditingUnidade(null)
+    setEditingConsultor(null)
     form.resetFields()
   }
 
   const handleSubmit = async (values) => {
     try {
-      if (editingUnidade) {
-        await unidadesApi.update(editingUnidade.id, values)
-        message.success('Unidade atualizada com sucesso')
+      if (editingConsultor) {
+        await consultoresApi.update(editingConsultor.id, values)
+        message.success('Consultor atualizado com sucesso')
       } else {
-        await unidadesApi.create(values)
-        message.success('Unidade criada com sucesso')
+        await consultoresApi.create(values)
+        message.success('Consultor criado com sucesso')
       }
       handleCloseModal()
-      fetchUnidades()
+      fetchConsultores()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar unidade')
+      message.error(error.response?.data?.detail || 'Erro ao salvar consultor')
     }
   }
 
   const columns = [
-    {
-      title: 'Código',
-      dataIndex: 'codigo',
-      key: 'codigo',
-      width: 100,
-    },
     {
       title: 'Nome',
       dataIndex: 'nome',
@@ -99,27 +88,42 @@ const UnidadesList = () => {
       sorter: (a, b) => a.nome.localeCompare(b.nome),
     },
     {
-      title: 'Empresa',
-      key: 'empresa',
-      render: (_, record) => record.empresa?.nome_fantasia || record.empresa?.razao_social || '-',
+      title: 'CPF',
+      dataIndex: 'cpf',
+      key: 'cpf',
+      width: 140,
     },
     {
-      title: 'Cidade/UF',
-      key: 'cidade',
-      render: (_, record) => `${record.cidade || '-'}/${record.estado || '-'}`,
+      title: 'Representante',
+      key: 'representante',
+      render: (_, record) => record.representante?.nome || '-',
+    },
+    {
+      title: 'CNPJ (Representante)',
+      key: 'cnpj',
+      render: (_, record) => record.representante?.cnpj || '-',
+      width: 160,
     },
     {
       title: 'Telefone',
       dataIndex: 'telefone',
       key: 'telefone',
+      width: 140,
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      ellipsis: true,
     },
     {
       title: 'Status',
       dataIndex: 'ativo',
       key: 'ativo',
+      width: 100,
       render: (ativo) => (
         <Tag color={ativo ? 'green' : 'red'}>
-          {ativo ? 'Ativa' : 'Inativa'}
+          {ativo ? 'Ativo' : 'Inativo'}
         </Tag>
       ),
     },
@@ -135,7 +139,7 @@ const UnidadesList = () => {
             onClick={() => handleOpenModal(record)}
           />
           <Popconfirm
-            title="Desativar unidade?"
+            title="Desativar consultor?"
             onConfirm={() => handleDelete(record.id)}
           >
             <Button type="link" danger icon={<DeleteOutlined />} />
@@ -148,109 +152,74 @@ const UnidadesList = () => {
   return (
     <div>
       <Card
-        title="Unidades"
+        title="Consultores"
         extra={
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => handleOpenModal()}
           >
-            Nova Unidade
+            Novo Consultor
           </Button>
         }
       >
         <Table
           columns={columns}
-          dataSource={unidades}
+          dataSource={consultores}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 900 }}
         />
       </Card>
 
       <Modal
-        title={editingUnidade ? 'Editar Unidade' : 'Nova Unidade'}
+        title={editingConsultor ? 'Editar Consultor' : 'Novo Consultor'}
         open={modalOpen}
         onCancel={handleCloseModal}
         footer={null}
-        width={700}
+        width={600}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
         >
+          <Form.Item
+            name="representante_id"
+            label="Representante"
+            rules={[{ required: true, message: 'Selecione o representante' }]}
+          >
+            <Select
+              showSearch
+              placeholder="Selecione o representante"
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={representantes.map(r => ({
+                value: r.id,
+                label: `${r.nome} - ${r.cnpj}`
+              }))}
+            />
+          </Form.Item>
+
           <Space style={{ display: 'flex', gap: 16 }}>
             <Form.Item
-              name="codigo"
-              label="Código"
-              rules={[{ required: true, message: 'Informe o código' }]}
-              style={{ width: 150 }}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
               name="nome"
-              label="Nome"
+              label="Nome Completo"
               rules={[{ required: true, message: 'Informe o nome' }]}
               style={{ flex: 1 }}
             >
               <Input />
             </Form.Item>
-          </Space>
-
-          <Form.Item
-            name="empresa_id"
-            label="Empresa"
-            rules={[{ required: true, message: 'Selecione a empresa' }]}
-          >
-            <Select
-              showSearch
-              placeholder="Selecione a empresa"
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              options={empresas.map(e => ({
-                value: e.id,
-                label: e.nome_fantasia || e.razao_social
-              }))}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="endereco"
-            label="Endereço"
-          >
-            <Input />
-          </Form.Item>
-
-          <Space style={{ display: 'flex', gap: 16 }}>
-            <Form.Item
-              name="cidade"
-              label="Cidade"
-              style={{ flex: 1 }}
-            >
-              <Input />
-            </Form.Item>
 
             <Form.Item
-              name="estado"
-              label="Estado"
-              style={{ width: 100 }}
+              name="cpf"
+              label="CPF"
+              rules={[{ required: true, message: 'Informe o CPF' }]}
+              style={{ width: 160 }}
             >
-              <Select
-                showSearch
-                options={estados.map(e => ({ value: e, label: e }))}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="cep"
-              label="CEP"
-              style={{ width: 120 }}
-            >
-              <Input />
+              <Input placeholder="000.000.000-00" />
             </Form.Item>
           </Space>
 
@@ -258,9 +227,10 @@ const UnidadesList = () => {
             <Form.Item
               name="telefone"
               label="Telefone"
+              rules={[{ required: true, message: 'Informe o telefone' }]}
               style={{ flex: 1 }}
             >
-              <Input />
+              <Input placeholder="(00) 00000-0000" />
             </Form.Item>
 
             <Form.Item
@@ -273,15 +243,15 @@ const UnidadesList = () => {
             </Form.Item>
           </Space>
 
-          {editingUnidade && (
+          {editingConsultor && (
             <Form.Item
               name="ativo"
               label="Status"
             >
               <Select
                 options={[
-                  { value: true, label: 'Ativa' },
-                  { value: false, label: 'Inativa' },
+                  { value: true, label: 'Ativo' },
+                  { value: false, label: 'Inativo' },
                 ]}
               />
             </Form.Item>
@@ -303,4 +273,4 @@ const UnidadesList = () => {
   )
 }
 
-export default UnidadesList
+export default ConsultoresList

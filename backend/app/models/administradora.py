@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -18,6 +19,9 @@ class Administradora(Base):
     contato_nome = Column(String(255), nullable=True)
     contato_telefone = Column(String(20), nullable=True)
     ativo = Column(Boolean, default=True)
+
+    # Relacionamento com TabelaCredito
+    tabelas_credito = relationship("TabelaCredito", back_populates="administradora")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

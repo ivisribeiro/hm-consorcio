@@ -121,7 +121,7 @@ const Relatorios = () => {
 
     setDownloadingPdf(true)
     try {
-      const blob = await relatoriosApi.gerarPdfCliente(selectedClienteIdFicha)
+      const blob = await relatoriosApi.gerarFichaAtendimento(selectedClienteIdFicha)
       const clienteNome = selectedClienteFicha?.nome || 'cliente'
       relatoriosApi.downloadPdf(blob, `ficha_atendimento_${clienteNome.replace(/\s+/g, '_')}.pdf`)
       message.success('Ficha de Atendimento gerada com sucesso!')

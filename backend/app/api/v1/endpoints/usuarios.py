@@ -1,32 +1,60 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 
 from app.core.database import get_db
-from app.core.security import get_current_user, get_password_hash, check_permission
-from app.models.usuario import Usuario, PerfilUsuario
-from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioResponse
+from app.core.security import get_current_user, get_password_hash
+from app.models.usuario import Usuario
+from app.models.perfil import Perfil
+from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioResponse, PerfilInfo
+from app.api.v1.endpoints.perfis import check_permission
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
+
+
+def usuario_to_response(usuario: Usuario) -> UsuarioResponse:
+    """Converte usuario para response com perfil info"""
+    perfil_info = None
+    if usuario.perfil_obj:
+        perfil_info = PerfilInfo(
+            id=usuario.perfil_obj.id,
+            codigo=usuario.perfil_obj.codigo,
+            nome=usuario.perfil_obj.nome,
+            cor=usuario.perfil_obj.cor
+        )
+
+    return UsuarioResponse(
+        id=usuario.id,
+        nome=usuario.nome,
+        email=usuario.email,
+        cpf=usuario.cpf,
+        telefone=usuario.telefone,
+        perfil_id=usuario.perfil_id,
+        perfil=perfil_info,
+        ativo=usuario.ativo,
+        unidade_id=usuario.unidade_id,
+        created_at=usuario.created_at,
+        last_login=usuario.last_login
+    )
 
 
 @router.get("/", response_model=List[UsuarioResponse])
 async def list_usuarios(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    perfil: Optional[PerfilUsuario] = None,
+    perfil_id: Optional[int] = None,
     ativo: Optional[bool] = None,
     search: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(check_permission([PerfilUsuario.ADMIN, PerfilUsuario.GERENTE]))
+    current_user: Usuario = Depends(check_permission("cadastros.usuarios"))
 ):
     """
     Lista todos os usuários com paginação e filtros
     """
-    query = db.query(Usuario)
+    query = db.query(Usuario).options(joinedload(Usuario.perfil_obj))
 
-    if perfil:
-        query = query.filter(Usuario.perfil == perfil)
+    if perfil_id:
+        query = query.filter(Usuario.perfil_id == perfil_id)
     if ativo is not None:
         query = query.filter(Usuario.ativo == ativo)
     if search:
@@ -35,20 +63,19 @@ async def list_usuarios(
             (Usuario.email.ilike(f"%{search}%"))
         )
 
-    total = query.count()
     usuarios = query.offset(skip).limit(limit).all()
 
-    return usuarios
+    return [usuario_to_response(u) for u in usuarios]
 
 
 @router.post("/", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 async def create_usuario(
     usuario_data: UsuarioCreate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(check_permission([PerfilUsuario.ADMIN]))
+    current_user: Usuario = Depends(check_permission("cadastros.usuarios"))
 ):
     """
-    Cria um novo usuário (apenas Admin)
+    Cria um novo usuário
     """
     # Verifica se email já existe
     if db.query(Usuario).filter(Usuario.email == usuario_data.email).first():
@@ -65,6 +92,14 @@ async def create_usuario(
                 detail="CPF já cadastrado"
             )
 
+    # Verifica se o perfil existe
+    perfil = db.query(Perfil).filter(Perfil.id == usuario_data.perfil_id).first()
+    if not perfil:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Perfil não encontrado"
+        )
+
     # Cria usuário
     usuario = Usuario(
         nome=usuario_data.nome,
@@ -72,7 +107,7 @@ async def create_usuario(
         senha_hash=get_password_hash(usuario_data.senha),
         cpf=usuario_data.cpf,
         telefone=usuario_data.telefone,
-        perfil=usuario_data.perfil,
+        perfil_id=usuario_data.perfil_id,
         unidade_id=usuario_data.unidade_id
     )
 
@@ -80,7 +115,10 @@ async def create_usuario(
     db.commit()
     db.refresh(usuario)
 
-    return UsuarioResponse.model_validate(usuario)
+    # Reload with perfil_obj
+    usuario = db.query(Usuario).options(joinedload(Usuario.perfil_obj)).filter(Usuario.id == usuario.id).first()
+
+    return usuario_to_response(usuario)
 
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse)
@@ -92,7 +130,7 @@ async def get_usuario(
     """
     Obtém um usuário pelo ID
     """
-    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    usuario = db.query(Usuario).options(joinedload(Usuario.perfil_obj)).filter(Usuario.id == usuario_id).first()
 
     if not usuario:
         raise HTTPException(
@@ -100,7 +138,7 @@ async def get_usuario(
             detail="Usuário não encontrado"
         )
 
-    return UsuarioResponse.model_validate(usuario)
+    return usuario_to_response(usuario)
 
 
 @router.put("/{usuario_id}", response_model=UsuarioResponse)
@@ -108,12 +146,12 @@ async def update_usuario(
     usuario_id: int,
     usuario_data: UsuarioUpdate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(check_permission([PerfilUsuario.ADMIN]))
+    current_user: Usuario = Depends(check_permission("cadastros.usuarios"))
 ):
     """
-    Atualiza um usuário (apenas Admin)
+    Atualiza um usuário
     """
-    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    usuario = db.query(Usuario).options(joinedload(Usuario.perfil_obj)).filter(Usuario.id == usuario_id).first()
 
     if not usuario:
         raise HTTPException(
@@ -133,6 +171,15 @@ async def update_usuario(
                 detail="Email já cadastrado"
             )
 
+    # Verifica se o perfil existe se foi passado
+    if usuario_data.perfil_id:
+        perfil = db.query(Perfil).filter(Perfil.id == usuario_data.perfil_id).first()
+        if not perfil:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Perfil não encontrado"
+            )
+
     # Atualiza campos
     update_data = usuario_data.model_dump(exclude_unset=True)
 
@@ -146,17 +193,20 @@ async def update_usuario(
     db.commit()
     db.refresh(usuario)
 
-    return UsuarioResponse.model_validate(usuario)
+    # Reload with perfil_obj
+    usuario = db.query(Usuario).options(joinedload(Usuario.perfil_obj)).filter(Usuario.id == usuario.id).first()
+
+    return usuario_to_response(usuario)
 
 
 @router.delete("/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_usuario(
     usuario_id: int,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(check_permission([PerfilUsuario.ADMIN]))
+    current_user: Usuario = Depends(check_permission("cadastros.usuarios"))
 ):
     """
-    Desativa um usuário (soft delete) - apenas Admin
+    Desativa um usuário (soft delete)
     """
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
 

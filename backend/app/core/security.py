@@ -96,15 +96,3 @@ async def get_current_active_user(current_user = Depends(get_current_user)):
             detail="Usuário inativo"
         )
     return current_user
-
-
-def check_permission(required_roles: list):
-    """Decorator para verificar permissões"""
-    async def permission_checker(current_user = Depends(get_current_user)):
-        if current_user.perfil not in required_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Permissão insuficiente"
-            )
-        return current_user
-    return permission_checker

@@ -3,24 +3,12 @@ import { Table, Button, Input, Space, Card, Tag, message, Popconfirm, Modal, For
 import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { usuariosApi } from '../../api/usuarios'
 import { unidadesApi } from '../../api/unidades'
-
-const perfilOptions = [
-  { value: 'admin', label: 'Administrador' },
-  { value: 'gerente', label: 'Gerente' },
-  { value: 'representante', label: 'Representante' },
-  { value: 'consultor', label: 'Consultor' },
-]
-
-const perfilColors = {
-  admin: 'red',
-  gerente: 'blue',
-  representante: 'green',
-  consultor: 'orange',
-}
+import { perfisApi } from '../../api/permissoes'
 
 const UsuariosList = () => {
   const [usuarios, setUsuarios] = useState([])
   const [unidades, setUnidades] = useState([])
+  const [perfis, setPerfis] = useState([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -48,9 +36,19 @@ const UsuariosList = () => {
     }
   }
 
+  const fetchPerfis = async () => {
+    try {
+      const data = await perfisApi.list()
+      setPerfis(data)
+    } catch (error) {
+      console.error('Erro ao carregar perfis:', error)
+    }
+  }
+
   useEffect(() => {
     fetchUsuarios()
     fetchUnidades()
+    fetchPerfis()
   }, [])
 
   const handleSearch = () => {
@@ -70,7 +68,10 @@ const UsuariosList = () => {
   const handleOpenModal = (usuario = null) => {
     setEditingUser(usuario)
     if (usuario) {
-      form.setFieldsValue(usuario)
+      form.setFieldsValue({
+        ...usuario,
+        perfil_id: usuario.perfil_id || usuario.perfil?.id,
+      })
     } else {
       form.resetFields()
     }
@@ -99,6 +100,15 @@ const UsuariosList = () => {
     }
   }
 
+  const getPerfilInfo = (usuario) => {
+    // Se tiver o objeto perfil completo da API
+    if (usuario.perfil?.nome) {
+      return usuario.perfil
+    }
+    // Se não, busca pelo perfil_id
+    return perfis.find(p => p.id === usuario.perfil_id) || { nome: '-', cor: 'default' }
+  }
+
   const columns = [
     {
       title: 'Nome',
@@ -113,13 +123,15 @@ const UsuariosList = () => {
     },
     {
       title: 'Perfil',
-      dataIndex: 'perfil',
       key: 'perfil',
-      render: (perfil) => (
-        <Tag color={perfilColors[perfil]}>
-          {perfilOptions.find(p => p.value === perfil)?.label || perfil}
-        </Tag>
-      ),
+      render: (_, record) => {
+        const perfilInfo = getPerfilInfo(record)
+        return (
+          <Tag color={perfilInfo.cor || 'blue'}>
+            {perfilInfo.nome}
+          </Tag>
+        )
+      },
     },
     {
       title: 'Unidade',
@@ -235,19 +247,29 @@ const UsuariosList = () => {
           )}
 
           <Form.Item
-            name="perfil"
+            name="perfil_id"
             label="Perfil"
             rules={[{ required: true, message: 'Selecione o perfil' }]}
           >
-            <Select options={perfilOptions} />
+            <Select
+              options={perfis.map(p => ({
+                value: p.id,
+                label: (
+                  <span>
+                    <span style={{ color: p.cor, marginRight: 8 }}>●</span>
+                    {p.nome}
+                  </span>
+                ),
+              }))}
+            />
           </Form.Item>
 
           <Form.Item
             name="unidade_id"
             label="Unidade"
-            rules={[{ required: true, message: 'Selecione a unidade' }]}
           >
             <Select
+              allowClear
               options={unidades.map(u => ({ value: u.id, label: u.nome }))}
             />
           </Form.Item>

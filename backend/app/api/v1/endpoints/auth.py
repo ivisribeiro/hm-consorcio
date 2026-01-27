@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 
 from app.core.database import get_db
@@ -12,9 +12,34 @@ from app.core.security import (
     get_current_user
 )
 from app.models.usuario import Usuario
-from app.schemas.usuario import Token, TokenRefresh, UsuarioResponse
+from app.schemas.usuario import Token, TokenRefresh, UsuarioResponse, PerfilInfo
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
+
+
+def build_usuario_response(user: Usuario) -> UsuarioResponse:
+    """Helper para construir UsuarioResponse com perfil"""
+    perfil_info = None
+    if user.perfil_obj:
+        perfil_info = PerfilInfo(
+            id=user.perfil_obj.id,
+            codigo=user.perfil_obj.codigo,
+            nome=user.perfil_obj.nome,
+            cor=user.perfil_obj.cor
+        )
+    return UsuarioResponse(
+        id=user.id,
+        nome=user.nome,
+        email=user.email,
+        cpf=user.cpf,
+        telefone=user.telefone,
+        perfil_id=user.perfil_id,
+        perfil=perfil_info,
+        ativo=user.ativo,
+        unidade_id=user.unidade_id,
+        created_at=user.created_at,
+        last_login=user.last_login
+    )
 
 
 @router.post("/login", response_model=Token)
@@ -25,8 +50,10 @@ async def login(
     """
     Realiza login do usuário e retorna tokens JWT
     """
-    # Busca usuário pelo email
-    user = db.query(Usuario).filter(Usuario.email == form_data.username).first()
+    # Busca usuário pelo email com perfil
+    user = db.query(Usuario).options(
+        joinedload(Usuario.perfil_obj)
+    ).filter(Usuario.email == form_data.username).first()
 
     if not user or not verify_password(form_data.password, user.senha_hash):
         raise HTTPException(
@@ -52,7 +79,7 @@ async def login(
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
-        user=UsuarioResponse.model_validate(user)
+        user=build_usuario_response(user)
     )
 
 
@@ -73,7 +100,9 @@ async def refresh_token(
         )
 
     user_id = payload.get("sub")
-    user = db.query(Usuario).filter(Usuario.id == int(user_id)).first()
+    user = db.query(Usuario).options(
+        joinedload(Usuario.perfil_obj)
+    ).filter(Usuario.id == int(user_id)).first()
 
     if not user or not user.ativo:
         raise HTTPException(
@@ -88,16 +117,23 @@ async def refresh_token(
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
-        user=UsuarioResponse.model_validate(user)
+        user=build_usuario_response(user)
     )
 
 
 @router.get("/me", response_model=UsuarioResponse)
-async def get_me(current_user: Usuario = Depends(get_current_user)):
+async def get_me(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
     """
     Retorna dados do usuário autenticado
     """
-    return UsuarioResponse.model_validate(current_user)
+    # Recarrega com perfil
+    user = db.query(Usuario).options(
+        joinedload(Usuario.perfil_obj)
+    ).filter(Usuario.id == current_user.id).first()
+    return build_usuario_response(user)
 
 
 @router.post("/logout")
@@ -115,13 +151,28 @@ async def seed_database(db: Session = Depends(get_db)):
     Popula o banco de dados com dados iniciais (executar apenas uma vez)
     """
     import bcrypt
-    from app.models.usuario import PerfilUsuario
+    from app.models.perfil import Perfil
 
     try:
         # Verifica se já existe admin
         existing_admin = db.query(Usuario).filter(Usuario.email == "admin@crmconsorcio.com.br").first()
         if existing_admin:
             return {"message": "Banco já foi populado", "admin_exists": True}
+
+        # Verifica/cria o perfil admin
+        admin_perfil = db.query(Perfil).filter(Perfil.codigo == "admin").first()
+        if not admin_perfil:
+            admin_perfil = Perfil(
+                codigo="admin",
+                nome="Administrador",
+                descricao="Acesso total ao sistema",
+                cor="#f5222d",
+                is_system=True,
+                ativo=True
+            )
+            db.add(admin_perfil)
+            db.commit()
+            db.refresh(admin_perfil)
 
         # Hash da senha usando bcrypt diretamente
         senha = b"admin123"
@@ -132,7 +183,7 @@ async def seed_database(db: Session = Depends(get_db)):
             nome="Administrador",
             email="admin@crmconsorcio.com.br",
             senha_hash=senha_hash,
-            perfil=PerfilUsuario.ADMIN,
+            perfil_id=admin_perfil.id,
             ativo=True
         )
         db.add(admin)

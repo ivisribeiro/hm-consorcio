@@ -11,8 +11,9 @@ from app.models.beneficio import Beneficio
 from app.models.tabela_credito import TabelaCredito
 from app.models.empresa import Empresa
 from app.services.pdf_generator import ClientePDFGenerator
-from app.services.contrato_pdf_generator import ContratoPDFGenerator
 from app.services.termo_adesao_pdf_generator import TermoAdesaoPDFGenerator
+from app.services.ficha_cliente_pdf import FichaClientePDFGenerator
+from app.services.contrato_venda_pdf import ContratoVendaPDFGenerator
 
 router = APIRouter(prefix="/relatorios", tags=["Relatórios"])
 
@@ -110,49 +111,38 @@ async def gerar_pdf_beneficio(
     )
 
 
-@router.get("/contrato/{beneficio_id}/pdf")
-async def gerar_contrato_pdf(
-    beneficio_id: int,
+@router.get("/ficha-atendimento/{cliente_id}/pdf")
+async def gerar_ficha_atendimento_pdf(
+    cliente_id: int,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
     """
-    Gera PDF do contrato de consultoria e serviços
+    Gera PDF da Ficha de Atendimento do Cliente (3 páginas)
+    - Página 1: Capa profissional
+    - Página 2: Cadastro Pessoa Física
+    - Página 3: Proposta de Orçamento
     """
-    # Busca benefício
-    beneficio = db.query(Beneficio).filter(Beneficio.id == beneficio_id).first()
-    if not beneficio:
-        raise HTTPException(status_code=404, detail="Benefício não encontrado")
-
     # Busca cliente
-    cliente = db.query(Cliente).filter(Cliente.id == beneficio.cliente_id).first()
+    cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
     if not cliente:
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
 
-    # Busca usuário (representante do benefício ou usuário logado)
-    usuario = None
-    if beneficio.representante_id:
-        usuario = db.query(Usuario).filter(Usuario.id == beneficio.representante_id).first()
-    if not usuario:
-        usuario = current_user
+    # Busca representante do cliente
+    representante = None
+    if cliente.representante_id:
+        representante = db.query(Usuario).filter(Usuario.id == cliente.representante_id).first()
+    if not representante:
+        representante = current_user
 
-    # Busca empresa (diretamente do benefício)
-    empresa = None
-    if beneficio.empresa_id:
-        empresa = db.query(Empresa).filter(Empresa.id == beneficio.empresa_id).first()
-
-    # Gera PDF do contrato
-    pdf_generator = ContratoPDFGenerator(
+    # Gera PDF
+    pdf_generator = FichaClientePDFGenerator(
         cliente=cliente,
-        beneficio=beneficio,
-        usuario=usuario,
-        empresa=empresa
+        representante=representante
     )
 
     pdf_bytes = pdf_generator.generate()
-
-    # Retorna como streaming response
-    filename = f"contrato_{beneficio_id}_{cliente.nome.replace(' ', '_')}.pdf"
+    filename = pdf_generator.get_filename()
 
     return StreamingResponse(
         BytesIO(pdf_bytes),
@@ -206,6 +196,67 @@ async def gerar_termo_adesao_pdf(
 
     # Retorna como streaming response
     filename = f"termo_adesao_{beneficio_id}_{cliente.nome.replace(' ', '_')}.pdf"
+
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
+
+
+@router.get("/contrato/{beneficio_id}/pdf")
+async def gerar_contrato_venda_pdf(
+    beneficio_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Gera PDF do Contrato de Venda (10 páginas)
+    - Página 1: Contrato Principal + Dados do Cliente
+    - Página 2: Definições e Obrigações
+    - Página 3: Obrigações e Condições
+    - Página 4: Disposições Gerais
+    - Página 5: Declarações e PEP
+    - Página 6: Declaração de Ciência
+    - Página 7: Termo de Consultoria (versão 1)
+    - Página 8: Termo de Consultoria (versão 2)
+    - Página 9: Questionário de Checagem
+    - Página 10: Ciência da Análise Creditícia
+    """
+    # Busca benefício
+    beneficio = db.query(Beneficio).filter(Beneficio.id == beneficio_id).first()
+    if not beneficio:
+        raise HTTPException(status_code=404, detail="Benefício não encontrado")
+
+    # Busca cliente
+    cliente = db.query(Cliente).filter(Cliente.id == beneficio.cliente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+
+    # Busca representante (do benefício ou usuário logado)
+    representante = None
+    if beneficio.representante_id:
+        representante = db.query(Usuario).filter(Usuario.id == beneficio.representante_id).first()
+    if not representante:
+        representante = current_user
+
+    # Busca empresa (do benefício)
+    empresa = None
+    if beneficio.empresa_id:
+        empresa = db.query(Empresa).filter(Empresa.id == beneficio.empresa_id).first()
+
+    # Gera PDF do contrato
+    pdf_generator = ContratoVendaPDFGenerator(
+        cliente=cliente,
+        beneficio=beneficio,
+        representante=representante,
+        empresa=empresa
+    )
+
+    pdf_bytes = pdf_generator.generate()
+    filename = pdf_generator.get_filename()
 
     return StreamingResponse(
         BytesIO(pdf_bytes),

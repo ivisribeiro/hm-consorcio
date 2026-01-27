@@ -1,15 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
-import enum
-
-
-class PerfilUsuario(str, enum.Enum):
-    ADMIN = "admin"
-    GERENTE = "gerente"
-    REPRESENTANTE = "representante"
-    CONSULTOR = "consultor"
 
 
 class Usuario(Base):
@@ -21,12 +13,13 @@ class Usuario(Base):
     senha_hash = Column(String(255), nullable=False)
     cpf = Column(String(14), unique=True, index=True, nullable=True)
     telefone = Column(String(20), nullable=True)
-    perfil = Column(Enum(PerfilUsuario, values_callable=lambda x: [e.value for e in x]), default=PerfilUsuario.REPRESENTANTE, nullable=False)
+    perfil_id = Column(Integer, ForeignKey("perfis.id"), nullable=False)
     ativo = Column(Boolean, default=True)
 
     # Relacionamentos
     unidade_id = Column(Integer, ForeignKey("unidades.id"), nullable=True)
     unidade = relationship("Unidade", back_populates="usuarios")
+    perfil_obj = relationship("Perfil", back_populates="usuarios")
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

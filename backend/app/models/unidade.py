@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -10,6 +10,7 @@ class Unidade(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String(255), nullable=False)
     codigo = Column(String(50), unique=True, index=True, nullable=False)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=True)
     endereco = Column(String(500), nullable=True)
     cidade = Column(String(100), nullable=True)
     estado = Column(String(2), nullable=True)
@@ -23,7 +24,9 @@ class Unidade(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relacionamentos
+    empresa = relationship("Empresa", back_populates="unidades")
     usuarios = relationship("Usuario", back_populates="unidade")
+    representantes = relationship("Representante", back_populates="unidade")
 
     def __repr__(self):
         return f"<Unidade {self.nome}>"

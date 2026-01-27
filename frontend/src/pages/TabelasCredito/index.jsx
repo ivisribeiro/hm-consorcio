@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Table, Button, Space, Card, Tag, message, Modal, Form, Input, Select, InputNumber } from 'antd'
-import { PlusOutlined, EditOutlined } from '@ant-design/icons'
-import { tabelasCreditoApi } from '../../api/beneficios'
+import { Table, Button, Space, Card, Tag, message, Modal, Form, Input, Select, InputNumber, Upload, Alert, Typography } from 'antd'
+import { PlusOutlined, EditOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons'
+import { tabelasCreditoApi, administradorasApi } from '../../api/beneficios'
+
+const { Text } = Typography
 
 const tipoBemOptions = [
   { value: 'imovel', label: 'Imóvel' },
@@ -17,16 +19,24 @@ const tipoBemColors = {
 
 const TabelasCreditoList = () => {
   const [tabelas, setTabelas] = useState([])
+  const [administradoras, setAdministradoras] = useState([])
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
   const [editingTabela, setEditingTabela] = useState(null)
   const [filterTipo, setFilterTipo] = useState(null)
+  const [filterAdmin, setFilterAdmin] = useState(null)
+  const [importResult, setImportResult] = useState(null)
+  const [importing, setImporting] = useState(false)
   const [form] = Form.useForm()
+  const [importForm] = Form.useForm()
 
   const fetchTabelas = async () => {
     setLoading(true)
     try {
-      const params = filterTipo ? { tipo_bem: filterTipo } : {}
+      const params = {}
+      if (filterTipo) params.tipo_bem = filterTipo
+      if (filterAdmin) params.administradora_id = filterAdmin
       const data = await tabelasCreditoApi.list(params)
       setTabelas(data)
     } catch (error) {
@@ -36,9 +46,19 @@ const TabelasCreditoList = () => {
     }
   }
 
+  const fetchAdministradoras = async () => {
+    try {
+      const data = await administradorasApi.list()
+      setAdministradoras(data)
+    } catch (error) {
+      console.error('Erro ao carregar administradoras:', error)
+    }
+  }
+
   useEffect(() => {
     fetchTabelas()
-  }, [filterTipo])
+    fetchAdministradoras()
+  }, [filterTipo, filterAdmin])
 
   const handleOpenModal = (tabela = null) => {
     setEditingTabela(tabela)
@@ -50,6 +70,7 @@ const TabelasCreditoList = () => {
         fundo_reserva: parseFloat(tabela.fundo_reserva),
         taxa_administracao: parseFloat(tabela.taxa_administracao),
         seguro_prestamista: parseFloat(tabela.seguro_prestamista),
+        administradora_id: tabela.administradora_id || tabela.administradora?.id,
       })
     } else {
       form.resetFields()
@@ -87,6 +108,51 @@ const TabelasCreditoList = () => {
     }
   }
 
+  const handleImport = async () => {
+    try {
+      const values = await importForm.validateFields()
+      const file = values.file?.fileList?.[0]?.originFileObj
+
+      if (!file) {
+        message.error('Selecione um arquivo CSV')
+        return
+      }
+
+      setImporting(true)
+      setImportResult(null)
+
+      const result = await tabelasCreditoApi.importarCSV(file, values.administradora_id)
+      setImportResult(result)
+
+      if (result.importados > 0) {
+        message.success(`${result.importados} tabelas importadas com sucesso`)
+        fetchTabelas()
+      }
+    } catch (error) {
+      message.error(error.response?.data?.detail || 'Erro ao importar CSV')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const handleCloseImportModal = () => {
+    setImportModalOpen(false)
+    setImportResult(null)
+    importForm.resetFields()
+  }
+
+  const downloadTemplate = () => {
+    const template = 'nome;tipo_bem;prazo;valor_credito;parcela;fundo_reserva;taxa_administracao;seguro_prestamista;indice_correcao;qtd_participantes;tipo_plano\n' +
+      'Imóvel 100K 120m;imovel;120;100000;850.00;2.5;26.0;0;INCC;4076;Normal\n' +
+      'Carro 50K 80m;carro;80;50000;650.00;2.5;26.0;0;INCC;4076;Normal'
+
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'modelo_tabelas_credito.csv'
+    link.click()
+  }
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -100,6 +166,11 @@ const TabelasCreditoList = () => {
       dataIndex: 'nome',
       key: 'nome',
       sorter: (a, b) => a.nome.localeCompare(b.nome),
+    },
+    {
+      title: 'Administradora',
+      key: 'administradora',
+      render: (_, record) => record.administradora?.nome || '-',
     },
     {
       title: 'Tipo',
@@ -129,12 +200,6 @@ const TabelasCreditoList = () => {
       dataIndex: 'prazo',
       key: 'prazo',
       render: (val) => `${val} meses`,
-    },
-    {
-      title: 'Fundo Reserva',
-      dataIndex: 'fundo_reserva',
-      key: 'fundo_reserva',
-      render: (val) => `${val}%`,
     },
     {
       title: 'Taxa Admin.',
@@ -173,13 +238,27 @@ const TabelasCreditoList = () => {
         extra={
           <Space>
             <Select
-              placeholder="Filtrar por tipo"
+              placeholder="Administradora"
               allowClear
-              style={{ width: 150 }}
+              style={{ width: 180 }}
+              options={administradoras.map(a => ({ value: a.id, label: a.nome }))}
+              onChange={setFilterAdmin}
+              value={filterAdmin}
+            />
+            <Select
+              placeholder="Tipo de bem"
+              allowClear
+              style={{ width: 130 }}
               options={tipoBemOptions}
               onChange={setFilterTipo}
               value={filterTipo}
             />
+            <Button
+              icon={<UploadOutlined />}
+              onClick={() => setImportModalOpen(true)}
+            >
+              Importar CSV
+            </Button>
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -195,9 +274,15 @@ const TabelasCreditoList = () => {
           dataSource={tabelas}
           rowKey="id"
           loading={loading}
+          pagination={{
+            defaultPageSize: 20,
+            showSizeChanger: true,
+            showTotal: (total) => `Total: ${total} tabelas`
+          }}
         />
       </Card>
 
+      {/* Modal de Edição/Criação */}
       <Modal
         title={editingTabela ? 'Editar Tabela de Crédito' : 'Nova Tabela de Crédito'}
         open={modalOpen}
@@ -216,6 +301,17 @@ const TabelasCreditoList = () => {
             rules={[{ required: true, message: 'Informe o nome' }]}
           >
             <Input placeholder="Ex: Imóvel 100K - 120m" />
+          </Form.Item>
+
+          <Form.Item
+            name="administradora_id"
+            label="Administradora"
+          >
+            <Select
+              placeholder="Selecione a administradora"
+              allowClear
+              options={administradoras.map(a => ({ value: a.id, label: a.nome }))}
+            />
           </Form.Item>
 
           <Space style={{ display: 'flex', gap: 16 }}>
@@ -344,6 +440,93 @@ const TabelasCreditoList = () => {
               </Button>
               <Button onClick={handleCloseModal}>
                 Cancelar
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal de Importação CSV */}
+      <Modal
+        title="Importar Tabelas via CSV"
+        open={importModalOpen}
+        onCancel={handleCloseImportModal}
+        footer={null}
+        width={600}
+      >
+        <Form form={importForm} layout="vertical">
+          <Alert
+            message="Formato do CSV"
+            description={
+              <div>
+                <p>Colunas: nome, tipo_bem, prazo, valor_credito, parcela</p>
+                <p>Opcionais: fundo_reserva, taxa_administracao, seguro_prestamista, indice_correcao, qtd_participantes, tipo_plano</p>
+                <p>Separador: vírgula (,) ou ponto-e-vírgula (;)</p>
+              </div>
+            }
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+
+          <Form.Item
+            name="administradora_id"
+            label="Administradora (aplicar a todas as tabelas)"
+          >
+            <Select
+              placeholder="Selecione a administradora"
+              allowClear
+              options={administradoras.map(a => ({ value: a.id, label: a.nome }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="file"
+            label="Arquivo CSV"
+            rules={[{ required: true, message: 'Selecione um arquivo' }]}
+          >
+            <Upload
+              accept=".csv"
+              maxCount={1}
+              beforeUpload={() => false}
+            >
+              <Button icon={<UploadOutlined />}>Selecionar arquivo CSV</Button>
+            </Upload>
+          </Form.Item>
+
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={downloadTemplate}
+            style={{ marginBottom: 16 }}
+          >
+            Baixar modelo CSV
+          </Button>
+
+          {importResult && (
+            <Alert
+              message={`Resultado: ${importResult.importados} de ${importResult.total} importadas`}
+              description={
+                importResult.erros.length > 0 && (
+                  <div style={{ maxHeight: 150, overflow: 'auto' }}>
+                    {importResult.erros.map((erro, i) => (
+                      <Text key={i} type="danger" style={{ display: 'block' }}>{erro}</Text>
+                    ))}
+                  </div>
+                )
+              }
+              type={importResult.erros.length > 0 ? 'warning' : 'success'}
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" onClick={handleImport} loading={importing}>
+                Importar
+              </Button>
+              <Button onClick={handleCloseImportModal}>
+                Fechar
               </Button>
             </Space>
           </Form.Item>

@@ -26,6 +26,11 @@ export const beneficiosApi = {
     return response.data
   },
 
+  getHistorico: async (id) => {
+    const response = await apiClient.get(`/beneficios/${id}/historico`)
+    return response.data
+  },
+
   simular: async (data) => {
     const response = await apiClient.post('/beneficios/simular', data)
     return response.data
@@ -45,6 +50,16 @@ export const tabelasCreditoApi = {
 
   update: async (id, data) => {
     const response = await apiClient.put(`/beneficios/tabelas/${id}`, data)
+    return response.data
+  },
+
+  importarCSV: async (file, administradoraId = null) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const params = administradoraId ? `?administradora_id=${administradoraId}` : ''
+    const response = await apiClient.post(`/beneficios/tabelas/importar-csv${params}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     return response.data
   },
 }

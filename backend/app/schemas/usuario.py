@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime
-from app.models.usuario import PerfilUsuario
 import re
 
 
@@ -10,7 +9,7 @@ class UsuarioBase(BaseModel):
     email: EmailStr
     cpf: Optional[str] = None
     telefone: Optional[str] = None
-    perfil: PerfilUsuario = PerfilUsuario.REPRESENTANTE
+    perfil_id: int
     unidade_id: Optional[int] = None
 
     @field_validator("cpf")
@@ -52,10 +51,20 @@ class UsuarioUpdate(BaseModel):
     email: Optional[EmailStr] = None
     cpf: Optional[str] = None
     telefone: Optional[str] = None
-    perfil: Optional[PerfilUsuario] = None
+    perfil_id: Optional[int] = None
     unidade_id: Optional[int] = None
     ativo: Optional[bool] = None
     senha: Optional[str] = None
+
+
+class PerfilInfo(BaseModel):
+    id: int
+    codigo: str
+    nome: str
+    cor: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 
 class UsuarioResponse(BaseModel):
@@ -64,7 +73,8 @@ class UsuarioResponse(BaseModel):
     email: str
     cpf: Optional[str] = None
     telefone: Optional[str] = None
-    perfil: PerfilUsuario
+    perfil_id: int
+    perfil: Optional[PerfilInfo] = None
     ativo: bool
     unidade_id: Optional[int] = None
     created_at: Optional[datetime] = None
