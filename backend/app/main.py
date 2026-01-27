@@ -67,3 +67,42 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
+
+
+@app.get("/debug/db")
+async def debug_db():
+    """Debug endpoint para verificar estado do banco"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {
+        "deploy_version": "2026-01-27-v3",
+        "database_url_masked": settings.DATABASE_URL[:30] + "..." if len(settings.DATABASE_URL) > 30 else "short",
+    }
+
+    try:
+        with engine.connect() as conn:
+            # Verifica tabelas existentes
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
+            result["tables"] = tables
+
+            # Verifica colunas da tabela usuarios
+            if "usuarios" in tables:
+                columns = [col["name"] for col in inspector.get_columns("usuarios")]
+                result["usuarios_columns"] = columns
+
+            # Verifica versão do alembic
+            if "alembic_version" in tables:
+                version = conn.execute(text("SELECT version_num FROM alembic_version")).fetchone()
+                result["alembic_version"] = version[0] if version else None
+            else:
+                result["alembic_version"] = "table not found"
+
+            # Verifica se tabela perfis existe
+            result["perfis_exists"] = "perfis" in tables
+
+    except Exception as e:
+        result["error"] = str(e)
+
+    return result
