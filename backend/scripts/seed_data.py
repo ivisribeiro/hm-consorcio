@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
-from app.models.usuario import Usuario, PerfilUsuario
+from app.models.usuario import Usuario
 from app.models.unidade import Unidade
 from app.models.empresa import Empresa
 from app.models.tabela_credito import TabelaCredito
@@ -52,18 +52,20 @@ def seed_empresas(db: Session):
 
 def seed_usuarios(db: Session):
     matriz = db.query(Unidade).filter(Unidade.codigo == "MTZ001").first()
+
+    # perfil_id: 1=admin, 2=gerente, 3=vendedor, 4=consultor
     usuarios = [
         Usuario(nome="Administrador", email="admin@crmconsorcio.com.br",
-                senha_hash=get_password_hash("admin123"), perfil=PerfilUsuario.ADMIN,
+                senha_hash=get_password_hash("admin123"), perfil_id=1,
                 unidade_id=matriz.id if matriz else None, ativo=True),
         Usuario(nome="Gerente Matriz", email="gerente@crmconsorcio.com.br",
-                senha_hash=get_password_hash("gerente123"), perfil=PerfilUsuario.GERENTE,
+                senha_hash=get_password_hash("gerente123"), perfil_id=2,
                 unidade_id=matriz.id if matriz else None, ativo=True),
         Usuario(nome="Representante Teste", email="representante@crmconsorcio.com.br",
-                senha_hash=get_password_hash("repr123"), perfil=PerfilUsuario.REPRESENTANTE,
+                senha_hash=get_password_hash("repr123"), perfil_id=3,
                 unidade_id=matriz.id if matriz else None, ativo=True),
         Usuario(nome="Consultor Teste", email="consultor@crmconsorcio.com.br",
-                senha_hash=get_password_hash("cons123"), perfil=PerfilUsuario.CONSULTOR,
+                senha_hash=get_password_hash("cons123"), perfil_id=4,
                 unidade_id=matriz.id if matriz else None, ativo=True),
     ]
     for u in usuarios:
