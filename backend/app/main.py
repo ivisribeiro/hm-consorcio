@@ -76,7 +76,7 @@ async def debug_db():
     from app.core.database import engine
 
     result = {
-        "deploy_version": "2026-01-27-v6",
+        "deploy_version": "2026-01-27-v7",
         "database_url_masked": settings.DATABASE_URL[:30] + "..." if len(settings.DATABASE_URL) > 30 else "short",
     }
 
@@ -123,7 +123,24 @@ async def fix_usuarios():
             inspector = inspect(engine)
             columns = [col["name"] for col in inspector.get_columns("usuarios")]
 
-            # 2. Adiciona coluna perfil_id (se não existir)
+            # 2. Insere perfis padrão se não existirem
+            result = conn.execute(text("SELECT COUNT(*) FROM perfis"))
+            count = result.fetchone()[0]
+            if count == 0:
+                conn.execute(text("""
+                    INSERT INTO perfis (id, codigo, nome, descricao, cor, is_system, ativo)
+                    VALUES
+                    (1, 'admin', 'Administrador', 'Acesso total ao sistema', '#f5222d', true, true),
+                    (2, 'gerente', 'Gerente', 'Gerente de unidade', '#fa8c16', true, true),
+                    (3, 'vendedor', 'Vendedor', 'Vendedor/Representante', '#1890ff', true, true),
+                    (4, 'consultor', 'Consultor', 'Consultor de vendas', '#52c41a', true, true)
+                """))
+                conn.commit()
+                steps.append("inserted default perfis")
+            else:
+                steps.append(f"perfis table has {count} records")
+
+            # 3. Adiciona coluna perfil_id (se não existir)
             if "perfil_id" not in columns:
                 conn.execute(text("ALTER TABLE usuarios ADD COLUMN perfil_id INTEGER"))
                 conn.commit()
@@ -131,7 +148,7 @@ async def fix_usuarios():
             else:
                 steps.append("perfil_id column already exists")
 
-            # 3. Atualiza perfil_id baseado em perfil (cast enum to text)
+            # 4. Atualiza perfil_id baseado em perfil (cast enum to text)
             # Só atualiza onde perfil_id é NULL
             result = conn.execute(text("""
                 UPDATE usuarios SET perfil_id =
@@ -148,7 +165,7 @@ async def fix_usuarios():
             conn.commit()
             steps.append(f"updated {result.rowcount} perfil_id values")
 
-            # 4. Adiciona FK (se não existir)
+            # 5. Adiciona FK (se não existir)
             try:
                 conn.execute(text("""
                     ALTER TABLE usuarios
@@ -163,11 +180,11 @@ async def fix_usuarios():
                 else:
                     raise
 
-            # 5. Remove coluna antiga perfil (opcional - mantém por segurança)
+            # 6. Remove coluna antiga perfil (opcional - mantém por segurança)
             # conn.execute(text("ALTER TABLE usuarios DROP COLUMN perfil"))
             # steps.append("dropped perfil column")
 
-            # 6. Cria tabela alembic_version e marca como migrado
+            # 7. Cria tabela alembic_version e marca como migrado
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS alembic_version (
                     version_num VARCHAR(32) NOT NULL,
