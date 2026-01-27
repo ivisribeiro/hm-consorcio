@@ -76,7 +76,7 @@ async def debug_db():
     from app.core.database import engine
 
     result = {
-        "deploy_version": "2026-01-27-v5",
+        "deploy_version": "2026-01-27-v6",
         "database_url_masked": settings.DATABASE_URL[:30] + "..." if len(settings.DATABASE_URL) > 30 else "short",
     }
 
@@ -118,13 +118,10 @@ async def fix_usuarios():
 
     try:
         with engine.connect() as conn:
-            # 1. Verifica se perfil_id já existe
+            # 1. Verifica estado atual
             from sqlalchemy import inspect
             inspector = inspect(engine)
             columns = [col["name"] for col in inspector.get_columns("usuarios")]
-
-            if "perfil_id" in columns:
-                return {"status": "already_fixed", "message": "perfil_id já existe"}
 
             # 2. Adiciona coluna perfil_id (se não existir)
             if "perfil_id" not in columns:
@@ -135,7 +132,8 @@ async def fix_usuarios():
                 steps.append("perfil_id column already exists")
 
             # 3. Atualiza perfil_id baseado em perfil (cast enum to text)
-            conn.execute(text("""
+            # Só atualiza onde perfil_id é NULL
+            result = conn.execute(text("""
                 UPDATE usuarios SET perfil_id =
                     CASE perfil::text
                         WHEN 'admin' THEN 1
@@ -145,18 +143,25 @@ async def fix_usuarios():
                         WHEN 'consultor' THEN 4
                         ELSE 3
                     END
+                WHERE perfil_id IS NULL
             """))
             conn.commit()
-            steps.append("updated perfil_id values")
+            steps.append(f"updated {result.rowcount} perfil_id values")
 
-            # 4. Adiciona FK
-            conn.execute(text("""
-                ALTER TABLE usuarios
-                ADD CONSTRAINT fk_usuarios_perfil_id
-                FOREIGN KEY (perfil_id) REFERENCES perfis(id)
-            """))
-            conn.commit()
-            steps.append("added foreign key")
+            # 4. Adiciona FK (se não existir)
+            try:
+                conn.execute(text("""
+                    ALTER TABLE usuarios
+                    ADD CONSTRAINT fk_usuarios_perfil_id
+                    FOREIGN KEY (perfil_id) REFERENCES perfis(id)
+                """))
+                conn.commit()
+                steps.append("added foreign key")
+            except Exception as e:
+                if "already exists" in str(e).lower():
+                    steps.append("foreign key already exists")
+                else:
+                    raise
 
             # 5. Remove coluna antiga perfil (opcional - mantém por segurança)
             # conn.execute(text("ALTER TABLE usuarios DROP COLUMN perfil"))
