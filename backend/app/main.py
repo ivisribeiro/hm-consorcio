@@ -76,7 +76,7 @@ async def debug_db():
     from app.core.database import engine
 
     result = {
-        "deploy_version": "2026-01-27-v3",
+        "deploy_version": "2026-01-27-v4",
         "database_url_masked": settings.DATABASE_URL[:30] + "..." if len(settings.DATABASE_URL) > 30 else "short",
     }
 
@@ -106,3 +106,74 @@ async def debug_db():
         result["error"] = str(e)
 
     return result
+
+
+@app.post("/debug/fix-usuarios")
+async def fix_usuarios():
+    """Corrige a tabela usuarios adicionando perfil_id"""
+    from sqlalchemy import text
+    from app.core.database import engine
+
+    steps = []
+
+    try:
+        with engine.connect() as conn:
+            # 1. Verifica se perfil_id já existe
+            from sqlalchemy import inspect
+            inspector = inspect(engine)
+            columns = [col["name"] for col in inspector.get_columns("usuarios")]
+
+            if "perfil_id" in columns:
+                return {"status": "already_fixed", "message": "perfil_id já existe"}
+
+            # 2. Adiciona coluna perfil_id
+            conn.execute(text("ALTER TABLE usuarios ADD COLUMN perfil_id INTEGER"))
+            conn.commit()
+            steps.append("added perfil_id column")
+
+            # 3. Atualiza perfil_id baseado em perfil
+            conn.execute(text("""
+                UPDATE usuarios SET perfil_id =
+                    CASE perfil
+                        WHEN 'admin' THEN 1
+                        WHEN 'gerente' THEN 2
+                        WHEN 'vendedor' THEN 3
+                        WHEN 'representante' THEN 3
+                        WHEN 'consultor' THEN 4
+                        ELSE 3
+                    END
+            """))
+            conn.commit()
+            steps.append("updated perfil_id values")
+
+            # 4. Adiciona FK
+            conn.execute(text("""
+                ALTER TABLE usuarios
+                ADD CONSTRAINT fk_usuarios_perfil_id
+                FOREIGN KEY (perfil_id) REFERENCES perfis(id)
+            """))
+            conn.commit()
+            steps.append("added foreign key")
+
+            # 5. Remove coluna antiga perfil (opcional - mantém por segurança)
+            # conn.execute(text("ALTER TABLE usuarios DROP COLUMN perfil"))
+            # steps.append("dropped perfil column")
+
+            # 6. Cria tabela alembic_version e marca como migrado
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS alembic_version (
+                    version_num VARCHAR(32) NOT NULL,
+                    CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                )
+            """))
+            conn.commit()
+            conn.execute(text("DELETE FROM alembic_version"))
+            conn.execute(text("INSERT INTO alembic_version (version_num) VALUES ('006')"))
+            conn.commit()
+            steps.append("created alembic_version and stamped to 006")
+
+        return {"status": "success", "steps": steps}
+
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "steps": steps, "trace": traceback.format_exc()}
