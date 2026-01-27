@@ -76,7 +76,7 @@ async def debug_db():
     from app.core.database import engine
 
     result = {
-        "deploy_version": "2026-01-27-v4",
+        "deploy_version": "2026-01-27-v5",
         "database_url_masked": settings.DATABASE_URL[:30] + "..." if len(settings.DATABASE_URL) > 30 else "short",
     }
 
@@ -126,15 +126,18 @@ async def fix_usuarios():
             if "perfil_id" in columns:
                 return {"status": "already_fixed", "message": "perfil_id já existe"}
 
-            # 2. Adiciona coluna perfil_id
-            conn.execute(text("ALTER TABLE usuarios ADD COLUMN perfil_id INTEGER"))
-            conn.commit()
-            steps.append("added perfil_id column")
+            # 2. Adiciona coluna perfil_id (se não existir)
+            if "perfil_id" not in columns:
+                conn.execute(text("ALTER TABLE usuarios ADD COLUMN perfil_id INTEGER"))
+                conn.commit()
+                steps.append("added perfil_id column")
+            else:
+                steps.append("perfil_id column already exists")
 
-            # 3. Atualiza perfil_id baseado em perfil
+            # 3. Atualiza perfil_id baseado em perfil (cast enum to text)
             conn.execute(text("""
                 UPDATE usuarios SET perfil_id =
-                    CASE perfil
+                    CASE perfil::text
                         WHEN 'admin' THEN 1
                         WHEN 'gerente' THEN 2
                         WHEN 'vendedor' THEN 3
