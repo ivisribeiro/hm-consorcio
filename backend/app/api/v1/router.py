@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     auth, usuarios, clientes, beneficios, unidades, empresas,
     utils, dashboard, relatorios, configuracoes,
-    representantes, consultores, perfis
+    representantes, consultores, perfis, tabelas_credito
 )
 
 api_router = APIRouter(prefix="/api/v1")
@@ -20,3 +20,4 @@ api_router.include_router(dashboard.router)
 api_router.include_router(relatorios.router)
 api_router.include_router(configuracoes.router)
 api_router.include_router(perfis.router)
+api_router.include_router(tabelas_credito.router)
