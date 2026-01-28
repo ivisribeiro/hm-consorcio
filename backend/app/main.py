@@ -76,7 +76,7 @@ async def debug_db():
     from app.core.database import engine
 
     result = {
-        "deploy_version": "2026-01-27-v7",
+        "deploy_version": "2026-01-27-v8",
         "database_url_masked": settings.DATABASE_URL[:30] + "..." if len(settings.DATABASE_URL) > 30 else "short",
     }
 
@@ -196,6 +196,79 @@ async def fix_usuarios():
             conn.execute(text("INSERT INTO alembic_version (version_num) VALUES ('006')"))
             conn.commit()
             steps.append("created alembic_version and stamped to 006")
+
+        return {"status": "success", "steps": steps}
+
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "steps": steps, "trace": traceback.format_exc()}
+
+
+@app.post("/debug/seed-permissoes")
+async def seed_permissoes():
+    """Popula a tabela de permissões"""
+    from sqlalchemy import text
+    from app.core.database import engine
+
+    PERMISSOES = [
+        ("clientes.criar", "Criar Cliente", "clientes"),
+        ("clientes.editar", "Editar Cliente", "clientes"),
+        ("clientes.visualizar", "Visualizar Cliente", "clientes"),
+        ("clientes.excluir", "Excluir Cliente", "clientes"),
+        ("beneficios.criar", "Criar Benefício", "beneficios"),
+        ("beneficios.editar", "Editar Benefício", "beneficios"),
+        ("beneficios.visualizar", "Visualizar Benefício", "beneficios"),
+        ("beneficios.alterar_status", "Alterar Status", "beneficios"),
+        ("contratos.visualizar", "Visualizar Contrato", "contratos"),
+        ("contratos.gerar", "Gerar Contrato", "contratos"),
+        ("contratos.alterar_status", "Alterar Status Contrato", "contratos"),
+        ("relatorios.ficha", "Gerar Ficha Inicial", "relatorios"),
+        ("relatorios.contrato_pdf", "Gerar PDF Contrato", "relatorios"),
+        ("relatorios.termo_pdf", "Gerar PDF Termo", "relatorios"),
+        ("cadastros.usuarios", "Gerenciar Usuários", "cadastros"),
+        ("cadastros.unidades", "Gerenciar Unidades", "cadastros"),
+        ("cadastros.empresas", "Gerenciar Empresas", "cadastros"),
+        ("cadastros.representantes", "Gerenciar Representantes", "cadastros"),
+        ("cadastros.consultores", "Gerenciar Consultores", "cadastros"),
+        ("cadastros.tabelas_credito", "Gerenciar Tabelas de Crédito", "cadastros"),
+        ("cadastros.administradoras", "Gerenciar Administradoras", "cadastros"),
+        ("configuracoes.sistema", "Configurações do Sistema", "configuracoes"),
+        ("configuracoes.perfis", "Gerenciar Perfis", "configuracoes"),
+    ]
+
+    steps = []
+
+    try:
+        with engine.connect() as conn:
+            # Verifica se já tem permissões
+            result = conn.execute(text("SELECT COUNT(*) FROM permissoes"))
+            count = result.fetchone()[0]
+
+            if count > 0:
+                return {"status": "already_seeded", "count": count}
+
+            # Insere as permissões
+            for codigo, nome, modulo in PERMISSOES:
+                conn.execute(text("""
+                    INSERT INTO permissoes (codigo, nome, modulo, ativo)
+                    VALUES (:codigo, :nome, :modulo, true)
+                """), {"codigo": codigo, "nome": nome, "modulo": modulo})
+
+            conn.commit()
+            steps.append(f"inserted {len(PERMISSOES)} permissions")
+
+            # Associa todas as permissões ao perfil admin (id=1)
+            result = conn.execute(text("SELECT id FROM permissoes"))
+            perm_ids = [row[0] for row in result.fetchall()]
+
+            for perm_id in perm_ids:
+                conn.execute(text("""
+                    INSERT INTO perfil_permissoes (perfil_id, permissao_id, ativo)
+                    VALUES (1, :perm_id, true)
+                """), {"perm_id": perm_id})
+
+            conn.commit()
+            steps.append(f"linked {len(perm_ids)} permissions to admin profile")
 
         return {"status": "success", "steps": steps}
 
