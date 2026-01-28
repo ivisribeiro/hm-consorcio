@@ -239,6 +239,72 @@ async def debug_unidades_table():
     return result
 
 
+@app.get("/debug/usuarios-table")
+async def debug_usuarios_table():
+    """Verifica estrutura completa da tabela usuarios"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            columns = []
+            for col in inspector.get_columns("usuarios"):
+                columns.append({
+                    "name": col["name"],
+                    "type": str(col["type"]),
+                    "nullable": col.get("nullable", True)
+                })
+            result["columns"] = columns
+
+            # Verifica se existe constraint na coluna perfil
+            result["has_perfil_column"] = any(c["name"] == "perfil" for c in columns)
+            result["has_perfil_id_column"] = any(c["name"] == "perfil_id" for c in columns)
+
+    except Exception as e:
+        import traceback
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
+@app.post("/debug/fix-usuarios-perfil")
+async def fix_usuarios_perfil():
+    """Remove a coluna perfil antiga da tabela usuarios"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            columns = [col["name"] for col in inspector.get_columns("usuarios")]
+
+            if "perfil" in columns:
+                # Remove a coluna perfil antiga
+                conn.execute(text("ALTER TABLE usuarios DROP COLUMN perfil"))
+                conn.commit()
+                result["steps"].append("dropped perfil column")
+            else:
+                result["steps"].append("perfil column does not exist")
+
+            # Verifica colunas após
+            columns_after = [col["name"] for col in inspector.get_columns("usuarios")]
+            result["columns_after"] = columns_after
+
+        result["status"] = "success"
+
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.post("/debug/fix-unidades-table")
 async def fix_unidades_table():
     """Adiciona coluna empresa_id na tabela unidades se não existir"""
