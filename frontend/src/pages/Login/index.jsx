@@ -70,10 +70,6 @@ const Login = () => {
           </Form.Item>
         </Form>
 
-        <div style={{ textAlign: 'center', color: '#999', fontSize: 12 }}>
-          <p>Usuários de teste:</p>
-          <p>admin@crmconsorcio.com.br / admin123</p>
-        </div>
       </Card>
     </div>
   )
