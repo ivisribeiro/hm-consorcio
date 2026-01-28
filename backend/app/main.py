@@ -239,35 +239,33 @@ async def debug_unidades_table():
     return result
 
 
-@app.post("/debug/create-unidade")
-async def debug_create_unidade():
-    """Tenta criar unidade com detalhes de erro"""
-    from sqlalchemy import text
+@app.post("/debug/fix-unidades-table")
+async def fix_unidades_table():
+    """Adiciona coluna empresa_id na tabela unidades se não existir"""
+    from sqlalchemy import text, inspect
     from app.core.database import engine
 
     result = {"steps": []}
 
     try:
         with engine.connect() as conn:
-            # 1. Verifica se codigo já existe
-            existing = conn.execute(text("SELECT id FROM unidades WHERE codigo = 'TEST001'")).fetchone()
-            if existing:
-                result["steps"].append(f"codigo TEST001 already exists with id {existing[0]}")
-                return result
+            inspector = inspect(engine)
+            columns = [col["name"] for col in inspector.get_columns("unidades")]
+            result["current_columns"] = columns
 
-            # 2. Tenta inserir
-            conn.execute(text("""
-                INSERT INTO unidades (nome, codigo, ativo)
-                VALUES ('Unidade Teste Debug', 'TEST001', true)
-            """))
-            conn.commit()
-            result["steps"].append("inserted unidade successfully")
+            # Adiciona empresa_id se não existir
+            if "empresa_id" not in columns:
+                conn.execute(text("""
+                    ALTER TABLE unidades ADD COLUMN empresa_id INTEGER REFERENCES empresas(id)
+                """))
+                conn.commit()
+                result["steps"].append("added empresa_id column")
+            else:
+                result["steps"].append("empresa_id column already exists")
 
-            # 3. Verifica se foi inserida
-            new_unidade = conn.execute(text("SELECT id, nome, codigo FROM unidades WHERE codigo = 'TEST001'")).fetchone()
-            if new_unidade:
-                result["steps"].append(f"created unidade: id={new_unidade[0]}, nome={new_unidade[1]}")
-                result["unidade_id"] = new_unidade[0]
+            # Verifica colunas atualizadas
+            columns_after = [col["name"] for col in inspector.get_columns("unidades")]
+            result["columns_after"] = columns_after
 
         result["status"] = "success"
 
