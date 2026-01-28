@@ -180,9 +180,13 @@ async def fix_usuarios():
                 else:
                     raise
 
-            # 6. Remove coluna antiga perfil (opcional - mantém por segurança)
-            # conn.execute(text("ALTER TABLE usuarios DROP COLUMN perfil"))
-            # steps.append("dropped perfil column")
+            # 6. Remove coluna antiga perfil (necessário para novos inserts)
+            if "perfil" in columns:
+                conn.execute(text("ALTER TABLE usuarios DROP COLUMN perfil"))
+                conn.commit()
+                steps.append("dropped old perfil column")
+            else:
+                steps.append("perfil column already removed")
 
             # 7. Cria tabela alembic_version e marca como migrado
             conn.execute(text("""
