@@ -204,6 +204,82 @@ async def fix_usuarios():
         return {"status": "error", "error": str(e), "steps": steps, "trace": traceback.format_exc()}
 
 
+@app.get("/debug/unidades-table")
+async def debug_unidades_table():
+    """Verifica estrutura da tabela unidades"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
+            result["unidades_exists"] = "unidades" in tables
+            result["empresas_exists"] = "empresas" in tables
+
+            if "unidades" in tables:
+                columns = [{"name": col["name"], "type": str(col["type"])} for col in inspector.get_columns("unidades")]
+                result["unidades_columns"] = columns
+
+            if "empresas" in tables:
+                empresas_count = conn.execute(text("SELECT COUNT(*) FROM empresas")).fetchone()[0]
+                result["empresas_count"] = empresas_count
+
+            # Verifica se há unidades
+            if "unidades" in tables:
+                unidades_count = conn.execute(text("SELECT COUNT(*) FROM unidades")).fetchone()[0]
+                result["unidades_count"] = unidades_count
+
+    except Exception as e:
+        import traceback
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
+@app.post("/debug/create-unidade")
+async def debug_create_unidade():
+    """Tenta criar unidade com detalhes de erro"""
+    from sqlalchemy import text
+    from app.core.database import engine
+
+    result = {"steps": []}
+
+    try:
+        with engine.connect() as conn:
+            # 1. Verifica se codigo já existe
+            existing = conn.execute(text("SELECT id FROM unidades WHERE codigo = 'TEST001'")).fetchone()
+            if existing:
+                result["steps"].append(f"codigo TEST001 already exists with id {existing[0]}")
+                return result
+
+            # 2. Tenta inserir
+            conn.execute(text("""
+                INSERT INTO unidades (nome, codigo, ativo)
+                VALUES ('Unidade Teste Debug', 'TEST001', true)
+            """))
+            conn.commit()
+            result["steps"].append("inserted unidade successfully")
+
+            # 3. Verifica se foi inserida
+            new_unidade = conn.execute(text("SELECT id, nome, codigo FROM unidades WHERE codigo = 'TEST001'")).fetchone()
+            if new_unidade:
+                result["steps"].append(f"created unidade: id={new_unidade[0]}, nome={new_unidade[1]}")
+                result["unidade_id"] = new_unidade[0]
+
+        result["status"] = "success"
+
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.post("/debug/seed-permissoes")
 async def seed_permissoes():
     """Popula a tabela de permissões"""
