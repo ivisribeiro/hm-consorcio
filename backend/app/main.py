@@ -243,6 +243,50 @@ async def debug_unidades_table():
     return result
 
 
+@app.post("/debug/drop-perfil-column")
+async def drop_perfil_column():
+    """Remove a coluna perfil antiga (enum) da tabela usuarios"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            columns = [col["name"] for col in inspector.get_columns("usuarios")]
+            result["columns_before"] = columns
+
+            if "perfil" in columns:
+                # Drop the old enum column
+                conn.execute(text("ALTER TABLE usuarios DROP COLUMN IF EXISTS perfil"))
+                conn.commit()
+                result["steps"].append("dropped perfil column")
+
+                # Also drop the enum type if it exists
+                try:
+                    conn.execute(text("DROP TYPE IF EXISTS perfilusuario"))
+                    conn.commit()
+                    result["steps"].append("dropped perfilusuario enum type")
+                except Exception as e:
+                    result["steps"].append(f"enum drop skipped: {str(e)[:50]}")
+
+            else:
+                result["steps"].append("perfil column does not exist")
+
+            # Re-check columns
+            columns_after = [col["name"] for col in inspector.get_columns("usuarios")]
+            result["columns_after"] = columns_after
+
+        result["status"] = "success"
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.get("/debug/usuarios-table")
 async def debug_usuarios_table():
     """Verifica estrutura completa da tabela usuarios"""
