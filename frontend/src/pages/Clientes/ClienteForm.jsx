@@ -110,7 +110,37 @@ const ClienteForm = () => {
       }
       navigate('/clientes')
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar cliente')
+      const errorData = error.response?.data
+      if (errorData?.detail) {
+        // Se detail é um array (erros de validação do Pydantic)
+        if (Array.isArray(errorData.detail)) {
+          const fieldErrors = errorData.detail.map(err => {
+            const field = err.loc?.[1] || err.loc?.[0] || 'campo'
+            const fieldNames = {
+              'nome': 'Nome',
+              'cpf': 'CPF',
+              'telefone': 'Telefone',
+              'email': 'Email',
+              'unidade_id': 'Unidade',
+              'data_nascimento': 'Data de Nascimento',
+              'data_expedicao': 'Data de Expedição',
+              'sexo': 'Sexo',
+              'estado_civil': 'Estado Civil',
+              'salario': 'Salário',
+            }
+            return `${fieldNames[field] || field}: ${err.msg}`
+          })
+          message.error({
+            content: fieldErrors.join(' | '),
+            duration: 6,
+          })
+        } else {
+          // Se detail é uma string
+          message.error(errorData.detail)
+        }
+      } else {
+        message.error('Erro ao salvar cliente. Verifique os dados e tente novamente.')
+      }
     } finally {
       setSaving(false)
     }
