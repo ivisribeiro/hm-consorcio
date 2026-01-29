@@ -273,9 +273,9 @@ async def debug_tabelas_credito_table():
     return result
 
 
-@app.post("/debug/create-tabelas-credito-table")
-async def create_tabelas_credito_table():
-    """Cria a tabela tabelas_credito se não existir"""
+@app.post("/debug/fix-tabelas-credito")
+async def fix_tabelas_credito_table():
+    """Adiciona coluna administradora_id na tabela tabelas_credito se não existir"""
     from sqlalchemy import text, inspect
     from app.core.database import engine
 
@@ -283,9 +283,21 @@ async def create_tabelas_credito_table():
     try:
         with engine.connect() as conn:
             inspector = inspect(engine)
-            tables = inspector.get_table_names()
 
-            if "tabelas_credito" not in tables:
+            if "tabelas_credito" in inspector.get_table_names():
+                columns = [col["name"] for col in inspector.get_columns("tabelas_credito")]
+
+                if "administradora_id" not in columns:
+                    conn.execute(text("""
+                        ALTER TABLE tabelas_credito
+                        ADD COLUMN administradora_id INTEGER REFERENCES administradoras(id)
+                    """))
+                    conn.commit()
+                    result["steps"].append("added administradora_id column")
+                else:
+                    result["steps"].append("administradora_id column already exists")
+            else:
+                # Create table if not exists
                 conn.execute(text("""
                     CREATE TABLE tabelas_credito (
                         id SERIAL PRIMARY KEY,
@@ -308,8 +320,6 @@ async def create_tabelas_credito_table():
                 """))
                 conn.commit()
                 result["steps"].append("created tabelas_credito table")
-            else:
-                result["steps"].append("table already exists")
 
         result["status"] = "success"
     except Exception as e:
