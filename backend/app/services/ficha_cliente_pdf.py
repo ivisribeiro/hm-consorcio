@@ -241,8 +241,8 @@ class FichaClientePDFGenerator:
     def _add_logo(self, elements, width_cm=5):
         """Adiciona logo centralizado mantendo proporção"""
         if os.path.exists(self.logo_path):
-            # Proporção da logo HM Capital (aproximadamente 1.2:1)
-            height_cm = width_cm / 1.2
+            # Proporção da logo HM Capital (1536x737 = 2.08:1)
+            height_cm = width_cm / 2.08
             logo = Image(self.logo_path, width=width_cm*cm, height=height_cm*cm)
             logo.hAlign = 'CENTER'
             elements.append(logo)
@@ -337,7 +337,7 @@ class FichaClientePDFGenerator:
         # Logo pequeno no topo
         if os.path.exists(self.logo_path):
             logo_width = 4*cm
-            logo = Image(self.logo_path, width=logo_width, height=logo_width/1.2)
+            logo = Image(self.logo_path, width=logo_width, height=logo_width/2.08)
             logo.hAlign = 'CENTER'
             elements.append(logo)
             elements.append(Spacer(1, 0.3*cm))
@@ -631,7 +631,7 @@ class FichaClientePDFGenerator:
         # Logo pequeno no topo
         if os.path.exists(self.logo_path):
             logo_width = 4*cm
-            logo = Image(self.logo_path, width=logo_width, height=logo_width/1.2)
+            logo = Image(self.logo_path, width=logo_width, height=logo_width/2.08)
             logo.hAlign = 'CENTER'
             elements.append(logo)
             elements.append(Spacer(1, 0.3*cm))
