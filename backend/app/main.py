@@ -15,11 +15,80 @@ from app.models import *  # noqa: F401, F403
 limiter = Limiter(key_func=get_remote_address)
 
 
+def seed_initial_data():
+    """Cria dados iniciais no banco (perfis, permissões, admin)"""
+    from sqlalchemy.orm import Session
+    from app.core.database import SessionLocal
+    from app.models.perfil import Perfil
+    from app.models.usuario import Usuario
+    from app.models.permissao import Permissao
+    import bcrypt
+
+    db = SessionLocal()
+    try:
+        # 1. Criar perfis padrão
+        if db.query(Perfil).count() == 0:
+            perfis = [
+                Perfil(id=1, codigo='admin', nome='Administrador', descricao='Acesso total ao sistema', cor='#f5222d', is_system=True, ativo=True),
+                Perfil(id=2, codigo='gerente', nome='Gerente', descricao='Gerente de unidade', cor='#fa8c16', is_system=True, ativo=True),
+                Perfil(id=3, codigo='vendedor', nome='Vendedor', descricao='Vendedor/Representante', cor='#1890ff', is_system=True, ativo=True),
+                Perfil(id=4, codigo='consultor', nome='Consultor', descricao='Consultor de vendas', cor='#52c41a', is_system=True, ativo=True),
+            ]
+            for p in perfis:
+                db.add(p)
+            db.commit()
+            print("✓ Perfis criados")
+
+        # 2. Criar permissões
+        if db.query(Permissao).count() == 0:
+            permissoes = [
+                ("clientes.criar", "Criar Cliente", "clientes"),
+                ("clientes.editar", "Editar Cliente", "clientes"),
+                ("clientes.visualizar", "Visualizar Cliente", "clientes"),
+                ("clientes.excluir", "Excluir Cliente", "clientes"),
+                ("beneficios.criar", "Criar Benefício", "beneficios"),
+                ("beneficios.editar", "Editar Benefício", "beneficios"),
+                ("beneficios.visualizar", "Visualizar Benefício", "beneficios"),
+                ("beneficios.alterar_status", "Alterar Status", "beneficios"),
+                ("cadastros.usuarios", "Gerenciar Usuários", "cadastros"),
+                ("cadastros.unidades", "Gerenciar Unidades", "cadastros"),
+                ("cadastros.empresas", "Gerenciar Empresas", "cadastros"),
+                ("configuracoes.sistema", "Configurações do Sistema", "configuracoes"),
+                ("configuracoes.perfis", "Gerenciar Perfis", "configuracoes"),
+            ]
+            for codigo, nome, modulo in permissoes:
+                db.add(Permissao(codigo=codigo, nome=nome, modulo=modulo, ativo=True))
+            db.commit()
+            print("✓ Permissões criadas")
+
+        # 3. Criar usuário admin
+        if not db.query(Usuario).filter(Usuario.email == "ivis_ribeiro@hotmail.com").first():
+            senha_hash = bcrypt.hashpw(b"admin@123", bcrypt.gensalt()).decode('utf-8')
+            admin = Usuario(
+                nome="Ivis Ribeiro",
+                email="ivis_ribeiro@hotmail.com",
+                senha_hash=senha_hash,
+                perfil_id=1,
+                ativo=True
+            )
+            db.add(admin)
+            db.commit()
+            print("✓ Admin criado: ivis_ribeiro@hotmail.com")
+
+    except Exception as e:
+        print(f"Erro no seed: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup e shutdown events"""
     # Startup: criar tabelas do banco
     Base.metadata.create_all(bind=engine)
+    # Seed dados iniciais
+    seed_initial_data()
     yield
     # Shutdown: nada a fazer
 

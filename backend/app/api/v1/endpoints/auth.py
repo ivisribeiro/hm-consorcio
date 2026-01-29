@@ -155,7 +155,7 @@ async def seed_database(db: Session = Depends(get_db)):
 
     try:
         # Verifica se já existe admin
-        existing_admin = db.query(Usuario).filter(Usuario.email == "admin@crmconsorcio.com.br").first()
+        existing_admin = db.query(Usuario).filter(Usuario.email == "ivis_ribeiro@hotmail.com").first()
         if existing_admin:
             return {"message": "Banco já foi populado", "admin_exists": True}
 
@@ -175,13 +175,13 @@ async def seed_database(db: Session = Depends(get_db)):
             db.refresh(admin_perfil)
 
         # Hash da senha usando bcrypt diretamente
-        senha = b"admin123"
+        senha = b"admin@123"
         senha_hash = bcrypt.hashpw(senha, bcrypt.gensalt()).decode('utf-8')
 
         # Cria usuário admin (sem unidade)
         admin = Usuario(
-            nome="Administrador",
-            email="admin@crmconsorcio.com.br",
+            nome="Ivis Ribeiro",
+            email="ivis_ribeiro@hotmail.com",
             senha_hash=senha_hash,
             perfil_id=admin_perfil.id,
             ativo=True
@@ -191,8 +191,7 @@ async def seed_database(db: Session = Depends(get_db)):
 
         return {
             "message": "Admin criado com sucesso!",
-            "usuario": "admin@crmconsorcio.com.br",
-            "senha": "admin123"
+            "usuario": "ivis_ribeiro@hotmail.com"
         }
     except Exception as e:
         db.rollback()
