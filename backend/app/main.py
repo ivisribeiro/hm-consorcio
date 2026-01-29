@@ -273,6 +273,33 @@ async def debug_tabelas_credito_table():
     return result
 
 
+@app.post("/debug/fix-clientes-table")
+async def fix_clientes_table():
+    """Corrige a coluna taxa_inicial na tabela clientes (Numeric(5,2) -> Numeric(12,2))"""
+    from sqlalchemy import text
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            # Altera o tipo da coluna taxa_inicial
+            conn.execute(text("""
+                ALTER TABLE clientes
+                ALTER COLUMN taxa_inicial TYPE NUMERIC(12, 2)
+            """))
+            conn.commit()
+            result["steps"].append("changed taxa_inicial from Numeric(5,2) to Numeric(12,2)")
+
+        result["status"] = "success"
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.post("/debug/fix-tabelas-credito")
 async def fix_tabelas_credito_table():
     """Adiciona coluna administradora_id na tabela tabelas_credito se não existir"""

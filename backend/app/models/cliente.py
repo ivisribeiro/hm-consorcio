@@ -85,7 +85,7 @@ class Cliente(Base):
     # Preferências do Cliente
     parcela_maxima = Column(Numeric(12, 2), nullable=True)
     valor_carta_desejado = Column(Numeric(12, 2), nullable=True)
-    taxa_inicial = Column(Numeric(5, 2), nullable=True)
+    taxa_inicial = Column(Numeric(12, 2), nullable=True)
 
     # Dados Bancários
     banco = Column(String(100), nullable=True)
