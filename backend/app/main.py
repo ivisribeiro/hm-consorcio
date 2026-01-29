@@ -243,6 +243,84 @@ async def debug_unidades_table():
     return result
 
 
+@app.get("/debug/tabelas-credito-table")
+async def debug_tabelas_credito_table():
+    """Verifica estrutura da tabela tabelas_credito"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
+            result["table_exists"] = "tabelas_credito" in tables
+
+            if "tabelas_credito" in tables:
+                columns = [{"name": col["name"], "type": str(col["type"])} for col in inspector.get_columns("tabelas_credito")]
+                result["columns"] = columns
+
+                count = conn.execute(text("SELECT COUNT(*) FROM tabelas_credito")).fetchone()[0]
+                result["count"] = count
+            else:
+                result["message"] = "Table does not exist"
+
+    except Exception as e:
+        import traceback
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
+@app.post("/debug/create-tabelas-credito-table")
+async def create_tabelas_credito_table():
+    """Cria a tabela tabelas_credito se não existir"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
+
+            if "tabelas_credito" not in tables:
+                conn.execute(text("""
+                    CREATE TABLE tabelas_credito (
+                        id SERIAL PRIMARY KEY,
+                        nome VARCHAR(100) NOT NULL,
+                        tipo_bem VARCHAR(20) NOT NULL,
+                        prazo INTEGER NOT NULL,
+                        valor_credito NUMERIC(12,2) NOT NULL,
+                        parcela NUMERIC(12,2) NOT NULL,
+                        fundo_reserva NUMERIC(5,2) DEFAULT 2.5,
+                        taxa_administracao NUMERIC(5,2) DEFAULT 26.0,
+                        seguro_prestamista NUMERIC(5,2) DEFAULT 0.0,
+                        indice_correcao VARCHAR(20) DEFAULT 'INCC',
+                        qtd_participantes INTEGER DEFAULT 4076,
+                        tipo_plano VARCHAR(50) DEFAULT 'Normal',
+                        ativo BOOLEAN DEFAULT true,
+                        administradora_id INTEGER REFERENCES administradoras(id),
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        updated_at TIMESTAMP WITH TIME ZONE
+                    )
+                """))
+                conn.commit()
+                result["steps"].append("created tabelas_credito table")
+            else:
+                result["steps"].append("table already exists")
+
+        result["status"] = "success"
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.post("/debug/drop-perfil-column")
 async def drop_perfil_column():
     """Remove a coluna perfil antiga (enum) da tabela usuarios"""
