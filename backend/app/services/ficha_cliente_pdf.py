@@ -37,7 +37,7 @@ class FichaClientePDFGenerator:
 
         # Caminho do logo
         self.logo_path = os.path.join(
-            os.path.dirname(__file__), '..', 'static', 'images', 'logo-white-bg.jpg'
+            os.path.dirname(__file__), '..', 'static', 'images', 'logo-hm-capital.png'
         )
 
         # Data atual
@@ -238,9 +238,11 @@ class FichaClientePDFGenerator:
             'FieldCell', fontSize=8, alignment=TA_LEFT, leading=10
         ))
 
-    def _add_logo(self, elements, width_cm=5, height_cm=1.875):
-        """Adiciona logo centralizado"""
+    def _add_logo(self, elements, width_cm=5):
+        """Adiciona logo centralizado mantendo proporção"""
         if os.path.exists(self.logo_path):
+            # Proporção da logo HM Capital (aproximadamente 1.2:1)
+            height_cm = width_cm / 1.2
             logo = Image(self.logo_path, width=width_cm*cm, height=height_cm*cm)
             logo.hAlign = 'CENTER'
             elements.append(logo)
@@ -256,9 +258,11 @@ class FichaClientePDFGenerator:
         # Espaço inicial
         elements.append(Spacer(1, 2.5*cm))
 
-        # Logo grande centralizado (proporção correta da imagem)
+        # Logo grande centralizado (proporção correta da imagem HM Capital)
         if os.path.exists(self.logo_path):
-            logo = Image(self.logo_path, width=12*cm, height=4.5*cm)
+            logo_width = 8*cm
+            logo_height = logo_width / 1.2  # Mantém proporção
+            logo = Image(self.logo_path, width=logo_width, height=logo_height)
             logo.hAlign = 'CENTER'
             elements.append(logo)
 
@@ -332,7 +336,8 @@ class FichaClientePDFGenerator:
 
         # Logo pequeno no topo
         if os.path.exists(self.logo_path):
-            logo = Image(self.logo_path, width=3.5*cm, height=1.3*cm)
+            logo_width = 4*cm
+            logo = Image(self.logo_path, width=logo_width, height=logo_width/1.2)
             logo.hAlign = 'CENTER'
             elements.append(logo)
             elements.append(Spacer(1, 0.3*cm))
@@ -625,7 +630,8 @@ class FichaClientePDFGenerator:
 
         # Logo pequeno no topo
         if os.path.exists(self.logo_path):
-            logo = Image(self.logo_path, width=4*cm, height=1.5*cm)
+            logo_width = 4*cm
+            logo = Image(self.logo_path, width=logo_width, height=logo_width/1.2)
             logo.hAlign = 'CENTER'
             elements.append(logo)
             elements.append(Spacer(1, 0.3*cm))
