@@ -35,9 +35,11 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list:
         """Retorna lista de origens CORS permitidas"""
         origins = [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
-        # Em produção, adiciona a URL do Render automaticamente
+        # Em produção, adiciona URLs de deploy automaticamente
         if not self.DEBUG:
             origins.append("https://*.onrender.com")
+            origins.append("https://*.railway.app")
+            origins.append("https://*.up.railway.app")
         return origins
 
     class Config:
