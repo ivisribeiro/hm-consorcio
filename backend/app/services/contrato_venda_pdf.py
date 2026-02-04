@@ -32,6 +32,7 @@ class ContratoVendaPDFGenerator:
         self.valor_primeira_parcela = float(beneficio.parcela or 0)
         valor_entrada = float(beneficio.valor_entrada or 0) if hasattr(beneficio, 'valor_entrada') and beneficio.valor_entrada else float(beneficio.valor_credito or 0) * 0.05
         self.taxa_servico = valor_entrada - self.valor_primeira_parcela if valor_entrada > self.valor_primeira_parcela else 0
+        self.valor_adesao = self.taxa_servico + self.valor_primeira_parcela
 
         self.local = f"{(cliente.cidade or 'SAO PAULO').upper()} - {(cliente.estado or 'SP').upper()}"
         self.logo_b64 = self._load_logo_base64()
@@ -477,7 +478,7 @@ class ContratoVendaPDFGenerator:
                     <div class="field"><div class="label">Prazo Grupo</div><div class="value">{self._safe(b, 'prazo_grupo')}</div></div>
                     <div class="field"><div class="label">Prazo Cota</div><div class="value">{self._safe(b, 'prazo_cota', self._safe(b, 'prazo_grupo'))}</div></div>
                     <div class="field"><div class="label">Valor do Credito</div><div class="value">{self._format_currency(b.valor_credito)}</div></div>
-                    <div class="field"><div class="label">Valor Adesao</div><div class="value">{self._format_currency(self.valor_primeira_parcela)}</div></div>
+                    <div class="field"><div class="label">Valor Adesao</div><div class="value">{self._format_currency(self.valor_adesao)}</div></div>
                     <div class="field"><div class="label">Indice Correcao</div><div class="value">{self._safe(b, 'indice_correcao', 'INCC')}</div></div>
                 </div>
                 <div class="row">
@@ -498,10 +499,13 @@ class ContratoVendaPDFGenerator:
 
             <div class="pill-row"><div class="pill">RECIBO E FORMA DO PAGAMENTO INICIAL</div></div>
             <section class="card">
-                <p class="receipt-text">Recebemos a importancia de <b>{self._format_currency(self.taxa_servico)}</b> na forma abaixo descrita, sendo este valor referente ao pagamento da taxa de servico da Capital Banq e prestacao de servicos de consultoria, aos quais declara o(a) CONTRATANTE ciente de que nao se trata de Cota contemplada, Financiamento ou Emprestimo.</p>
+                <p class="receipt-text">Recebemos a importancia de <b>{self._format_currency(self.taxa_servico)}</b> na forma abaixo descrita, sendo este valor referente a intermediacao e prestacao de servicos de consultoria da Capital Banq, aos quais declara o(a) CONTRATANTE ciente de que nao se trata de Cota contemplada, Financiamento ou Emprestimo.</p>
                 <div class="sig-label">Assinatura do(a) contratante</div>
                 <div class="sig-line"></div>
-                <p class="receipt-text">Recebemos a importancia de <b>{self._format_currency(b.parcela)}</b>, referente a parcela inicial do plano escolhido pela CONTRATANTE. A CONTRATADA a promover a contratacao da cota adequada na administradora de consorcio, efetuar a sua adesao sem reservas e transferir os valores correspondentes a parcela inicial do plano aderido, no valor de <b>{self._format_currency(b.valor_credito)}</b>.</p>
+                <p class="receipt-text">Recebemos a importancia de <b>{self._format_currency(b.parcela)}</b>, referente a parcela inicial do plano escolhido pela CONTRATANTE. A CONTRATADA se compromete a promover a contratacao da cota adequada na administradora de consorcio e efetuar a sua adesao sem reservas.</p>
+                <div class="sig-label">Assinatura do(a) contratante</div>
+                <div class="sig-line"></div>
+                <p class="receipt-text">Valor do consorcio: <b>{self._format_currency(b.valor_credito)}</b>, referente ao credito total do plano aderido pela CONTRATANTE junto a administradora de consorcio.</p>
                 <div class="sig-label">Assinatura do(a) contratante</div>
                 <div class="sig-line" style="margin-bottom:0;"></div>
             </section>
