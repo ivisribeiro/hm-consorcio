@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Table, Button, Space, Card, Tag, message, Modal, Form, Input, Select } from 'antd'
 import { PlusOutlined, EditOutlined } from '@ant-design/icons'
 import { administradorasApi } from '../../api/beneficios'
+import { getErrorMessage } from '../../utils/errorHandler'
 
 const estados = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
@@ -59,7 +60,7 @@ const AdministradorasList = () => {
       handleCloseModal()
       fetchAdministradoras()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar administradora')
+      message.error(getErrorMessage(error, 'Erro ao salvar administradora'))
     }
   }
 

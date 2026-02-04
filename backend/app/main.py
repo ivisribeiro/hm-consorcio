@@ -112,7 +112,7 @@ cors_origins = settings.cors_origins_list if not settings.DEBUG else ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_origin_regex=r"https://.*\.onrender\.com",  # Permite qualquer subdomínio do Render
+    allow_origin_regex=r"https://.*\.(onrender\.com|railway\.app|up\.railway\.app)",  # Render e Railway
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

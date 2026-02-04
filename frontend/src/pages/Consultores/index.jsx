@@ -3,6 +3,7 @@ import { Table, Button, Space, Card, Tag, message, Popconfirm, Modal, Form, Inpu
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { consultoresApi } from '../../api/consultores'
 import { representantesApi } from '../../api/representantes'
+import { getErrorMessage } from '../../utils/errorHandler'
 
 const ConsultoresList = () => {
   const [consultores, setConsultores] = useState([])
@@ -76,7 +77,7 @@ const ConsultoresList = () => {
       handleCloseModal()
       fetchConsultores()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar consultor')
+      message.error(getErrorMessage(error, 'Erro ao salvar consultor'))
     }
   }
 

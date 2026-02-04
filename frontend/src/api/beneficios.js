@@ -2,7 +2,7 @@ import apiClient from './client'
 
 export const beneficiosApi = {
   list: async (params = {}) => {
-    const response = await apiClient.get('/beneficios', { params })
+    const response = await apiClient.get('/beneficios/', { params })
     return response.data
   },
 
@@ -12,7 +12,7 @@ export const beneficiosApi = {
   },
 
   create: async (data) => {
-    const response = await apiClient.post('/beneficios', data)
+    const response = await apiClient.post('/beneficios/', data)
     return response.data
   },
 

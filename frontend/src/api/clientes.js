@@ -2,7 +2,7 @@ import apiClient from './client'
 
 export const clientesApi = {
   list: async (params = {}) => {
-    const response = await apiClient.get('/clientes', { params })
+    const response = await apiClient.get('/clientes/', { params })
     return response.data
   },
 
@@ -12,7 +12,7 @@ export const clientesApi = {
   },
 
   create: async (data) => {
-    const response = await apiClient.post('/clientes', data)
+    const response = await apiClient.post('/clientes/', data)
     return response.data
   },
 
@@ -45,14 +45,14 @@ export const utilsApi = {
 
 export const unidadesApi = {
   list: async (params = {}) => {
-    const response = await apiClient.get('/unidades', { params })
+    const response = await apiClient.get('/unidades/', { params })
     return response.data
   },
 }
 
 export const empresasApi = {
   list: async (params = {}) => {
-    const response = await apiClient.get('/empresas', { params })
+    const response = await apiClient.get('/empresas/', { params })
     return response.data
   },
 }

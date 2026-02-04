@@ -3,6 +3,7 @@ import { Table, Button, Space, Card, Tag, message, Popconfirm, Modal, Form, Inpu
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { unidadesApi } from '../../api/unidades'
 import { empresasApi } from '../../api/empresas'
+import { getErrorMessage } from '../../utils/errorHandler'
 
 const estados = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
@@ -81,7 +82,7 @@ const UnidadesList = () => {
       handleCloseModal()
       fetchUnidades()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar unidade')
+      message.error(getErrorMessage(error, 'Erro ao salvar unidade'))
     }
   }
 

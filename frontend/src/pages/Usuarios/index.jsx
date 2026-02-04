@@ -4,6 +4,7 @@ import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant
 import { usuariosApi } from '../../api/usuarios'
 import { unidadesApi } from '../../api/unidades'
 import { perfisApi } from '../../api/permissoes'
+import { getErrorMessage } from '../../utils/errorHandler'
 
 const UsuariosList = () => {
   const [usuarios, setUsuarios] = useState([])
@@ -96,7 +97,7 @@ const UsuariosList = () => {
       handleCloseModal()
       fetchUsuarios(search)
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar usuário')
+      message.error(getErrorMessage(error, 'Erro ao salvar usuário'))
     }
   }
 

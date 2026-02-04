@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Table, Button, Space, Card, Tag, message, Modal, Form, Input, Select, InputNumber, Upload, Alert, Typography } from 'antd'
 import { PlusOutlined, EditOutlined, UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { tabelasCreditoApi, administradorasApi } from '../../api/beneficios'
+import { getErrorMessage } from '../../utils/errorHandler'
 
 const { Text } = Typography
 
@@ -104,7 +105,7 @@ const TabelasCreditoList = () => {
       handleCloseModal()
       fetchTabelas()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar tabela')
+      message.error(getErrorMessage(error, 'Erro ao salvar tabela'))
     }
   }
 
@@ -129,7 +130,7 @@ const TabelasCreditoList = () => {
         fetchTabelas()
       }
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao importar CSV')
+      message.error(getErrorMessage(error, 'Erro ao importar CSV'))
     } finally {
       setImporting(false)
     }

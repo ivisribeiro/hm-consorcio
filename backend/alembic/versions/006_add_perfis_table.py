@@ -50,9 +50,10 @@ def upgrade() -> None:
     columns = [col['name'] for col in inspector.get_columns('usuarios')]
 
     if 'perfil' in columns:
+        # Cast enum to text for comparison
         op.execute("""
             UPDATE usuarios SET perfil_id =
-                CASE perfil
+                CASE perfil::text
                     WHEN 'admin' THEN 1
                     WHEN 'gerente' THEN 2
                     WHEN 'vendedor' THEN 3
@@ -63,6 +64,8 @@ def upgrade() -> None:
         """)
         # 5. Remover coluna antiga
         op.drop_column('usuarios', 'perfil')
+        # 6. Drop the enum type
+        op.execute("DROP TYPE IF EXISTS perfilusuario")
     else:
         # Se não existe coluna perfil, apenas setar padrão
         op.execute("UPDATE usuarios SET perfil_id = 1 WHERE perfil_id IS NULL")

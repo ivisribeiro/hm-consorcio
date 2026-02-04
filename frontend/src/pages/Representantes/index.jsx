@@ -3,6 +3,7 @@ import { Table, Button, Space, Card, Tag, message, Popconfirm, Modal, Form, Inpu
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { representantesApi } from '../../api/representantes'
 import { unidadesApi } from '../../api/unidades'
+import { getErrorMessage } from '../../utils/errorHandler'
 
 const RepresentantesList = () => {
   const [representantes, setRepresentantes] = useState([])
@@ -76,7 +77,7 @@ const RepresentantesList = () => {
       handleCloseModal()
       fetchRepresentantes()
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao salvar representante')
+      message.error(getErrorMessage(error, 'Erro ao salvar representante'))
     }
   }
 
