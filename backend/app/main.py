@@ -576,6 +576,60 @@ async def fix_unidades_table():
     return result
 
 
+@app.post("/debug/fix-perfil-permissoes-table")
+async def fix_perfil_permissoes_table():
+    """Recria a tabela perfil_permissoes com estrutura correta"""
+    from sqlalchemy import text
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            # Drop e recria a tabela
+            conn.execute(text("DROP TABLE IF EXISTS perfil_permissoes CASCADE"))
+            conn.commit()
+            result["steps"].append("dropped perfil_permissoes")
+
+            conn.execute(text("""
+                CREATE TABLE perfil_permissoes (
+                    id SERIAL PRIMARY KEY,
+                    perfil_id INTEGER NOT NULL REFERENCES perfis(id),
+                    permissao_id INTEGER NOT NULL REFERENCES permissoes(id),
+                    ativo BOOLEAN DEFAULT true,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    updated_at TIMESTAMP WITH TIME ZONE
+                )
+            """))
+            conn.commit()
+            result["steps"].append("created perfil_permissoes table")
+
+            # Criar índices
+            conn.execute(text("CREATE INDEX ix_perfil_permissoes_perfil_id ON perfil_permissoes(perfil_id)"))
+            conn.commit()
+            result["steps"].append("created index")
+
+            # Associar todas as permissões ao perfil admin (id=1)
+            r = conn.execute(text("SELECT id FROM permissoes WHERE ativo = true"))
+            perm_ids = [row[0] for row in r.fetchall()]
+
+            for perm_id in perm_ids:
+                conn.execute(text("""
+                    INSERT INTO perfil_permissoes (perfil_id, permissao_id, ativo)
+                    VALUES (1, :perm_id, true)
+                """), {"perm_id": perm_id})
+            conn.commit()
+            result["steps"].append(f"linked {len(perm_ids)} permissions to admin")
+
+        result["status"] = "success"
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.post("/debug/fix-perfis-editable")
 async def fix_perfis_editable():
     """Atualiza perfis para serem editáveis/excluíveis (is_system=False)"""
