@@ -576,6 +576,64 @@ async def fix_unidades_table():
     return result
 
 
+@app.post("/debug/fix-perfis-editable")
+async def fix_perfis_editable():
+    """Atualiza perfis para serem editáveis/excluíveis (is_system=False)"""
+    from sqlalchemy import text
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            # Atualiza todos os perfis para is_system=False (exceto admin que fica protegido)
+            r = conn.execute(text("""
+                UPDATE perfis SET is_system = false WHERE codigo != 'admin'
+            """))
+            conn.commit()
+            result["steps"].append(f"updated {r.rowcount} perfis to is_system=false")
+
+        result["status"] = "success"
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
+@app.post("/debug/fix-tabelas-credito-intermediacao")
+async def fix_tabelas_credito_intermediacao():
+    """Adiciona coluna valor_intermediacao na tabela tabelas_credito"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+            columns = [col["name"] for col in inspector.get_columns("tabelas_credito")]
+
+            if "valor_intermediacao" not in columns:
+                conn.execute(text("""
+                    ALTER TABLE tabelas_credito
+                    ADD COLUMN valor_intermediacao NUMERIC(12,2) DEFAULT 0
+                """))
+                conn.commit()
+                result["steps"].append("added valor_intermediacao column")
+            else:
+                result["steps"].append("valor_intermediacao already exists")
+
+        result["status"] = "success"
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.post("/debug/reset-database")
 async def reset_database():
     """
