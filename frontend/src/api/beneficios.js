@@ -35,6 +35,25 @@ export const beneficiosApi = {
     const response = await apiClient.post('/beneficios/simular', data)
     return response.data
   },
+
+  listFaixas: async (beneficioId) => {
+    const response = await apiClient.get(`/beneficios/${beneficioId}/faixas`)
+    return response.data
+  },
+
+  createFaixa: async (beneficioId, data) => {
+    const response = await apiClient.post(`/beneficios/${beneficioId}/faixas`, data)
+    return response.data
+  },
+
+  updateFaixa: async (beneficioId, faixaId, data) => {
+    const response = await apiClient.put(`/beneficios/${beneficioId}/faixas/${faixaId}`, data)
+    return response.data
+  },
+
+  deleteFaixa: async (beneficioId, faixaId) => {
+    await apiClient.delete(`/beneficios/${beneficioId}/faixas/${faixaId}`)
+  },
 }
 
 export const tabelasCreditoApi = {

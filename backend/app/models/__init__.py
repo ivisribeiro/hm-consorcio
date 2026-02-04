@@ -7,6 +7,7 @@ from app.models.tabela_credito import TabelaCredito
 from app.models.administradora import Administradora
 from app.models.beneficio import Beneficio
 from app.models.beneficio_historico import BeneficioHistorico
+from app.models.beneficio_faixa import BeneficioFaixa
 from app.models.configuracao import Configuracao
 from app.models.representante import Representante
 from app.models.consultor import Consultor
@@ -22,6 +23,7 @@ __all__ = [
     "Administradora",
     "Beneficio",
     "BeneficioHistorico",
+    "BeneficioFaixa",
     "Configuracao",
     "Representante",
     "Consultor",

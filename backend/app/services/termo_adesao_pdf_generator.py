@@ -14,12 +14,13 @@ import os
 
 
 class TermoAdesaoPDFGenerator:
-    def __init__(self, cliente, beneficio, usuario=None, empresa=None, representante=None):
+    def __init__(self, cliente, beneficio, usuario=None, empresa=None, representante=None, faixas=None):
         self.cliente = cliente
         self.beneficio = beneficio
         self.usuario = usuario
         self.empresa = empresa
         self.representante = representante
+        self.faixas = faixas or []
         self.width, self.height = A4
         self.styles = getSampleStyleSheet()
         self._setup_styles()
@@ -313,11 +314,30 @@ class TermoAdesaoPDFGenerator:
         valor_parcela = float(self.beneficio.parcela or 0)
         faixas_data = [
             ["Faixa:", "Fundo Comum:", "% Administração:", "% Reserva:", "% Seguro:", "Valor:"],
-            ["Parcela 1", "0,111%", "0,333%", "0,000%", "0,000%", self._format_currency(valor_parcela * 0.5)],
-            ["Parcela 2 a parcela 12", "0,224%", "0,671%", "0,000%", "0,000%", self._format_currency(valor_parcela)],
-            ["Parcela 13 a parcela 66", "0,862%", "0,005%", "0,027%", "0,000%", self._format_currency(valor_parcela)],
-            [f"Parcela {self.beneficio.prazo_grupo or 67}", "0,864%", "0,006%", "0,030%", "0,000%", self._format_currency(valor_parcela)],
         ]
+
+        if self.faixas:
+            for f in self.faixas:
+                if f.parcela_inicio == f.parcela_fim:
+                    label = f"Parcela {f.parcela_inicio}"
+                else:
+                    label = f"Parcela {f.parcela_inicio} a parcela {f.parcela_fim}"
+                faixas_data.append([
+                    label,
+                    f"{float(f.perc_fundo_comum):.3f}%",
+                    f"{float(f.perc_administracao):.3f}%",
+                    f"{float(f.perc_reserva):.3f}%",
+                    f"{float(f.perc_seguro):.3f}%",
+                    self._format_currency(float(f.valor_parcela)),
+                ])
+        else:
+            # Fallback: valores hardcoded
+            faixas_data.extend([
+                ["Parcela 1", "0,111%", "0,333%", "0,000%", "0,000%", self._format_currency(valor_parcela * 0.5)],
+                ["Parcela 2 a parcela 12", "0,224%", "0,671%", "0,000%", "0,000%", self._format_currency(valor_parcela)],
+                ["Parcela 13 a parcela 66", "0,862%", "0,005%", "0,027%", "0,000%", self._format_currency(valor_parcela)],
+                [f"Parcela {self.beneficio.prazo_grupo or 67}", "0,864%", "0,006%", "0,030%", "0,000%", self._format_currency(valor_parcela)],
+            ])
         t_faixas = Table(faixas_data, colWidths=[page_width * 0.20, page_width * 0.15, page_width * 0.17, page_width * 0.14, page_width * 0.14, page_width * 0.20])
         t_faixas.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),

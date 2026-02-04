@@ -62,7 +62,7 @@ hm-consorcio/
 - **Usuários** (`/usuarios`) - CRUD com perfis
 - **Unidades** (`/unidades`) - Filiais/unidades de venda
 - **Empresas** (`/empresas`) - Empresas parceiras
-- **Tabelas de Crédito** (`/tabelas-credito`) - Planos de consórcio com importação CSV
+- **Tabelas de Crédito** (`/tabelas-credito`) - Planos de consórcio com importação CSV, campo valor_intermediacao
 - **Administradoras** (`/administradoras`) - Administradoras de consórcio
 - **Perfis** (`/perfis`) - Sistema de perfis e permissões customizáveis
 - **Representantes** (`/representantes`) - Representantes de vendas
@@ -70,13 +70,13 @@ hm-consorcio/
 
 ### 5. Relatórios (`/relatorios`)
 - **Ficha de Atendimento**: PDF de 3 páginas
-  - Capa profissional
+  - Capa profissional com borda dupla dourada
   - Cadastro Pessoa Física
-  - Proposta de Orçamento
+  - Proposta de Orçamento (4 propostas compactas, caixa de observações ampliada)
   - Seleciona cliente → gera PDF
 
 - **Contrato de Venda**: PDF de 10 páginas (modelo Capital Banq)
-  - Página 1: Contrato Principal + Dados do Cliente
+  - Página 1: Contrato Principal + Dados do Cliente + Recibo (3 itens: intermediação, parcela, valor consórcio)
   - Página 2: Definições e Obrigações
   - Página 3: Obrigações e Condições
   - Página 4: Disposições Gerais
@@ -86,9 +86,15 @@ hm-consorcio/
   - Página 8: Termo de Consultoria (versão 2)
   - Página 9: Questionário de Checagem
   - Página 10: Ciência da Análise Creditícia
+  - Campo "Valor Adesão" = intermediação + parcela
   - Seleciona cliente → benefício → gera PDF
 
 - **Termo de Adesão**: PDF de 3 páginas
+  - Logo Capital Banq centralizada
+  - Dados cadastrais, taxas, faixas de parcelas
+  - Declarações e autorizações (itens 1-11)
+  - Representante com nome, razão social e CNPJ (modelo Representante)
+  - Assinaturas e aviso final
   - Seleciona cliente → benefício → gera PDF
 
 ## Arquivos de Geração de PDF
@@ -96,19 +102,24 @@ hm-consorcio/
 ### `backend/app/services/ficha_cliente_pdf.py`
 - Classe `FichaClientePDFGenerator`
 - Gera Ficha de Atendimento (3 páginas)
-- Cor dourada (#C4A962) para headers
+- Cor dourada (#C4A962) para headers, borda dupla dourada na capa
 - Recebe: cliente, representante
 
 ### `backend/app/services/contrato_venda_pdf.py`
 - Classe `ContratoVendaPDFGenerator`
-- Gera Contrato de Venda (10 páginas)
-- Cor teal/azul (#2E7D8A) para headers
+- Gera Contrato de Venda (10 páginas) com WeasyPrint
+- Cor teal/azul (#178AA0) para headers
+- Valor Adesão = intermediação + parcela
+- Recibo separado em 3 itens: intermediação, parcela, valor consórcio
 - Recebe: cliente, beneficio, representante, empresa (opcional)
 
 ### `backend/app/services/termo_adesao_pdf_generator.py`
 - Classe `TermoAdesaoPDFGenerator`
-- Gera Termo de Adesão (3 páginas)
-- Recebe: cliente, beneficio, usuario, empresa (opcional)
+- Gera Termo de Adesão (3 páginas) com ReportLab
+- Logo Capital Banq centralizada
+- Grids alinhados por page_width
+- Representante com razão social e CNPJ (modelo Representante)
+- Recebe: cliente, beneficio, usuario, empresa (opcional), representante (opcional)
 
 ## Endpoints da API
 
@@ -128,6 +139,10 @@ hm-consorcio/
 - `POST /api/v1/beneficios/{id}/avancar` - Avança status
 - `POST /api/v1/beneficios/{id}/voltar` - Volta status
 - `GET /api/v1/beneficios/{id}/historico` - Histórico de transições
+- `GET /api/v1/beneficios/{id}/faixas` - Lista faixas de parcelas
+- `POST /api/v1/beneficios/{id}/faixas` - Cria faixa
+- `PUT /api/v1/beneficios/{id}/faixas/{faixa_id}` - Atualiza faixa
+- `DELETE /api/v1/beneficios/{id}/faixas/{faixa_id}` - Remove faixa
 
 ### Perfis e Permissões
 - `GET /api/v1/perfis` - Lista perfis
@@ -190,7 +205,9 @@ npm run dev
 ## Arquivos de Logo
 - `frontend/public/images/logo-white-bg.jpg` - Logo fundo branco (Login, PDFs)
 - `frontend/public/images/logo-dark-bg.jpg` - Logo fundo escuro (Sidebar)
-- `backend/app/static/images/logo-white-bg.jpg` - Logo para geração de PDFs
+- `backend/app/static/images/logo-white-bg.jpg` - Logo HM Capital para PDFs
+- `backend/app/static/images/logo-capital-banq.png` - Logo Capital Banq (contrato, termo)
+- `backend/app/static/images/logo-hm-capital.png` - Logo HM Capital (ficha de atendimento)
 
 ## Deploy (Render.com)
 
@@ -205,8 +222,8 @@ npm run dev
 
 ## Última Atualização
 - Data: 2026-02-04
-- Última tarefa: Migração do Contrato de Venda para WeasyPrint com layout moderno
-- Status: Sistema em produção (v10)
+- Última tarefa: Tabela auxiliar de faixas de parcelas no benefício (BeneficioFaixa)
+- Status: Sistema em produção (v11)
 
 ### Correções do Deploy (2026-01-28)
 1. **Tabela `perfis` vazia** - Inseridos perfis padrão via endpoint `/debug/fix-usuarios`
@@ -237,12 +254,17 @@ npm run dev
 | 2026-02-04 | Novo layout moderno: cards arredondados, pills, flex rows, footer absoluto |
 | 2026-02-04 | Adicionadas dependências WeasyPrint no Dockerfile e requirements.txt |
 | 2026-02-04 | Logo Capital Banq adicionada (backend/app/static/images/logo-capital-banq.png) |
+| 2026-02-04 | Ficha de Atendimento: borda dupla dourada na capa, propostas compactas, observações ampliadas |
+| 2026-02-04 | Contrato de Venda: campo Valor Adesão (intermediação + parcela), recibo com 3 itens separados |
+| 2026-02-04 | Tabelas de Crédito: novo campo valor_intermediacao (model, schema, CSV import, frontend) |
+| 2026-02-04 | Termo de Adesão: logo Capital Banq, grids alinhados, representante com razão social/CNPJ |
+| 2026-02-04 | Tabela auxiliar BeneficioFaixa: faixas de parcelas editáveis no BeneficioDetail, integração com PDF Termo |
 
 ---
 
 ## Próximas Tarefas Sugeridas
 
-1. [x] Revisar PDFs de relatórios (ajustes visuais) - Contrato migrado para WeasyPrint
+1. [x] Revisar PDFs de relatórios (ajustes visuais) - Todos os 3 PDFs refinados
 2. [ ] Implementar gráficos no Dashboard
 3. [ ] Adicionar filtros avançados nas listagens
 4. [ ] Implementar exportação de relatórios em Excel
@@ -260,3 +282,8 @@ npm run dev
 4. Contrato de Venda usa WeasyPrint (HTML/CSS), cor teal (#178AA0), layout com cards arredondados
 5. Módulo de Contratos foi removido - usar PDF generator diretamente
 6. WeasyPrint requer dependências de sistema no Dockerfile (pango, cairo, gdk-pixbuf)
+7. Termo de Adesão e Contrato usam logo Capital Banq; Ficha usa logo HM Capital
+8. Tabela de Crédito tem campo `valor_intermediacao` (Numeric 12,2, default 0)
+9. Valor Adesão no contrato = taxa_servico (intermediação) + primeira parcela
+10. BeneficioFaixa: tabela auxiliar com faixas de parcelas (parcela_inicio, parcela_fim, perc_fundo_comum, perc_administracao, perc_reserva, perc_seguro, valor_parcela)
+11. Faixas de parcelas são editáveis no BeneficioDetail.jsx e usadas no PDF do Termo de Adesão (fallback hardcoded se não houver faixas)

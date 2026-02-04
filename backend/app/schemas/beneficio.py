@@ -241,3 +241,32 @@ class BeneficioHistoricoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ==================== FAIXAS DE PARCELAS ====================
+
+class BeneficioFaixaBase(BaseModel):
+    parcela_inicio: int
+    parcela_fim: int
+    perc_fundo_comum: Decimal
+    perc_administracao: Decimal
+    perc_reserva: Decimal = Decimal("0")
+    perc_seguro: Decimal = Decimal("0")
+    valor_parcela: Decimal
+
+
+class BeneficioFaixaCreate(BeneficioFaixaBase):
+    pass
+
+
+class BeneficioFaixaUpdate(BeneficioFaixaBase):
+    pass
+
+
+class BeneficioFaixaResponse(BeneficioFaixaBase):
+    id: int
+    beneficio_id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

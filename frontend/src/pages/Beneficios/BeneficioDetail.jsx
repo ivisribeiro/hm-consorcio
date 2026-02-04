@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Card, Descriptions, Tag, Button, Space, Steps, message, Spin, Modal,
-  Input, Row, Col, Timeline, Divider, Typography, Alert, Tooltip
+  Input, InputNumber, Row, Col, Timeline, Divider, Typography, Alert, Tooltip,
+  Table, Popconfirm, Form
 } from 'antd'
 import {
   ArrowLeftOutlined, CheckOutlined, CloseOutlined, SendOutlined,
   FileTextOutlined, EditOutlined, SafetyCertificateOutlined,
   CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined,
-  FilePdfOutlined, RollbackOutlined, ArrowRightOutlined, UserOutlined
+  FilePdfOutlined, RollbackOutlined, ArrowRightOutlined, UserOutlined,
+  PlusOutlined, DeleteOutlined
 } from '@ant-design/icons'
 import { beneficiosApi } from '../../api/beneficios'
 import { clientesApi } from '../../api/clientes'
@@ -62,6 +64,13 @@ const BeneficioDetail = () => {
   const [updating, setUpdating] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
 
+  // Faixas
+  const [faixas, setFaixas] = useState([])
+  const [faixaModalVisible, setFaixaModalVisible] = useState(false)
+  const [editingFaixa, setEditingFaixa] = useState(null)
+  const [faixaLoading, setFaixaLoading] = useState(false)
+  const [faixaForm] = Form.useForm()
+
   // Modals
   const [cadastroModal, setCadastroModal] = useState(false)
   const [rejeicaoModal, setRejeicaoModal] = useState(false)
@@ -80,12 +89,14 @@ const BeneficioDetail = () => {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [beneficioData, historicoData] = await Promise.all([
+      const [beneficioData, historicoData, faixasData] = await Promise.all([
         beneficiosApi.get(id),
-        beneficiosApi.getHistorico(id)
+        beneficiosApi.getHistorico(id),
+        beneficiosApi.listFaixas(id)
       ])
       setBeneficio(beneficioData)
       setHistorico(historicoData)
+      setFaixas(faixasData)
 
       const clienteData = await clientesApi.get(beneficioData.cliente_id)
       setCliente(clienteData)
@@ -96,6 +107,112 @@ const BeneficioDetail = () => {
       setLoading(false)
     }
   }
+
+  const loadFaixas = async () => {
+    try {
+      const data = await beneficiosApi.listFaixas(id)
+      setFaixas(data)
+    } catch (error) {
+      message.error('Erro ao carregar faixas')
+    }
+  }
+
+  const handleFaixaSubmit = async () => {
+    try {
+      const values = await faixaForm.validateFields()
+      setFaixaLoading(true)
+      if (editingFaixa) {
+        await beneficiosApi.updateFaixa(id, editingFaixa.id, values)
+        message.success('Faixa atualizada')
+      } else {
+        await beneficiosApi.createFaixa(id, values)
+        message.success('Faixa criada')
+      }
+      setFaixaModalVisible(false)
+      setEditingFaixa(null)
+      faixaForm.resetFields()
+      loadFaixas()
+    } catch (error) {
+      if (error.errorFields) return
+      message.error('Erro ao salvar faixa')
+    } finally {
+      setFaixaLoading(false)
+    }
+  }
+
+  const handleDeleteFaixa = async (faixaId) => {
+    try {
+      await beneficiosApi.deleteFaixa(id, faixaId)
+      message.success('Faixa removida')
+      loadFaixas()
+    } catch (error) {
+      message.error('Erro ao remover faixa')
+    }
+  }
+
+  const openFaixaModal = (faixa = null) => {
+    setEditingFaixa(faixa)
+    if (faixa) {
+      faixaForm.setFieldsValue(faixa)
+    } else {
+      faixaForm.resetFields()
+    }
+    setFaixaModalVisible(true)
+  }
+
+  const faixaColumns = [
+    {
+      title: 'Faixa',
+      key: 'faixa',
+      render: (_, record) =>
+        record.parcela_inicio === record.parcela_fim
+          ? `Parcela ${record.parcela_inicio}`
+          : `Parcela ${record.parcela_inicio} a ${record.parcela_fim}`,
+    },
+    {
+      title: '% Fundo Comum',
+      dataIndex: 'perc_fundo_comum',
+      render: (v) => `${Number(v).toFixed(3)}%`,
+      align: 'center',
+    },
+    {
+      title: '% Administração',
+      dataIndex: 'perc_administracao',
+      render: (v) => `${Number(v).toFixed(3)}%`,
+      align: 'center',
+    },
+    {
+      title: '% Reserva',
+      dataIndex: 'perc_reserva',
+      render: (v) => `${Number(v).toFixed(3)}%`,
+      align: 'center',
+    },
+    {
+      title: '% Seguro',
+      dataIndex: 'perc_seguro',
+      render: (v) => `${Number(v).toFixed(3)}%`,
+      align: 'center',
+    },
+    {
+      title: 'Valor Parcela',
+      dataIndex: 'valor_parcela',
+      render: (v) => formatCurrency(v),
+      align: 'right',
+    },
+    {
+      title: 'Ações',
+      key: 'acoes',
+      width: 100,
+      render: (_, record) => (
+        <Space size="small">
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openFaixaModal(record)} />
+          <Popconfirm title="Remover faixa?" onConfirm={() => handleDeleteFaixa(record.id)}>
+            <Button type="link" size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ]
 
   const handleStatusUpdate = async (newStatus, extra = {}) => {
     setUpdating(true)
@@ -556,6 +673,36 @@ const BeneficioDetail = () => {
           </Space>
         </Card>
 
+        {/* Faixas de Parcelas */}
+        <Card
+          title="Faixas de Parcelas"
+          size="small"
+          type="inner"
+          style={{ marginBottom: 16 }}
+          extra={
+            <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => openFaixaModal()}>
+              Adicionar Faixa
+            </Button>
+          }
+        >
+          {faixas.length > 0 ? (
+            <Table
+              dataSource={faixas}
+              columns={faixaColumns}
+              rowKey="id"
+              pagination={false}
+              size="small"
+            />
+          ) : (
+            <Alert
+              message="Nenhuma faixa cadastrada"
+              description="As faixas são usadas no PDF do Termo de Adesão. Sem faixas, valores padrão serão utilizados."
+              type="info"
+              showIcon
+            />
+          )}
+        </Card>
+
         {/* Timeline de eventos */}
         <Card
           title={
@@ -651,6 +798,59 @@ const BeneficioDetail = () => {
           value={motivoCancelamento}
           onChange={(e) => setMotivoCancelamento(e.target.value)}
         />
+      </Modal>
+
+      {/* Modal de Faixa de Parcela */}
+      <Modal
+        title={editingFaixa ? 'Editar Faixa' : 'Nova Faixa de Parcela'}
+        open={faixaModalVisible}
+        onOk={handleFaixaSubmit}
+        onCancel={() => { setFaixaModalVisible(false); setEditingFaixa(null); faixaForm.resetFields() }}
+        confirmLoading={faixaLoading}
+        okText="Salvar"
+        width={600}
+      >
+        <Form form={faixaForm} layout="vertical">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="parcela_inicio" label="Parcela Início" rules={[{ required: true, message: 'Obrigatório' }]}>
+                <InputNumber min={1} style={{ width: '100%' }} placeholder="Ex: 1" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="parcela_fim" label="Parcela Fim" rules={[{ required: true, message: 'Obrigatório' }]}>
+                <InputNumber min={1} style={{ width: '100%' }} placeholder="Ex: 12" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="perc_fundo_comum" label="% Fundo Comum" rules={[{ required: true, message: 'Obrigatório' }]}>
+                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} placeholder="Ex: 0.224" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="perc_administracao" label="% Administração" rules={[{ required: true, message: 'Obrigatório' }]}>
+                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} placeholder="Ex: 0.671" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="perc_reserva" label="% Reserva" initialValue={0}>
+                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="perc_seguro" label="% Seguro" initialValue={0}>
+                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="valor_parcela" label="Valor da Parcela (R$)" rules={[{ required: true, message: 'Obrigatório' }]}>
+            <InputNumber min={0} step={0.01} precision={2} style={{ width: '100%' }} placeholder="Ex: 1500.00" />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   )

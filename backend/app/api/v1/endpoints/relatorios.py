@@ -11,6 +11,7 @@ from app.models.beneficio import Beneficio
 from app.models.tabela_credito import TabelaCredito
 from app.models.empresa import Empresa
 from app.models.representante import Representante
+from app.models.beneficio_faixa import BeneficioFaixa
 from app.services.pdf_generator import ClientePDFGenerator
 from app.services.termo_adesao_pdf_generator import TermoAdesaoPDFGenerator
 from app.services.ficha_cliente_pdf import FichaClientePDFGenerator
@@ -195,13 +196,19 @@ async def gerar_termo_adesao_pdf(
     if not representante:
         representante = db.query(Representante).filter(Representante.ativo == True).first()
 
+    # Busca faixas de parcelas do benefício
+    faixas = db.query(BeneficioFaixa).filter(
+        BeneficioFaixa.beneficio_id == beneficio_id
+    ).order_by(BeneficioFaixa.parcela_inicio).all()
+
     # Gera PDF do termo de adesão
     pdf_generator = TermoAdesaoPDFGenerator(
         cliente=cliente,
         beneficio=beneficio,
         usuario=usuario,
         empresa=empresa,
-        representante=representante
+        representante=representante,
+        faixas=faixas
     )
 
     pdf_bytes = pdf_generator.generate()

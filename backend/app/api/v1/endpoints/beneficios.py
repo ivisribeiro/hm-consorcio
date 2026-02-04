@@ -12,6 +12,7 @@ from app.models.usuario import Usuario
 from app.models.cliente import Cliente
 from app.models.beneficio import Beneficio
 from app.models.beneficio_historico import BeneficioHistorico
+from app.models.beneficio_faixa import BeneficioFaixa
 from app.models.tabela_credito import TabelaCredito
 from app.schemas.beneficio import (
     BeneficioCreate, BeneficioUpdate, BeneficioResponse,
@@ -20,7 +21,8 @@ from app.schemas.beneficio import (
     TabelaCreditoImportResult,
     AdministradoraCreate, AdministradoraUpdate, AdministradoraResponse,
     SimulacaoRequest, SimulacaoResponse,
-    BeneficioHistoricoResponse
+    BeneficioHistoricoResponse,
+    BeneficioFaixaCreate, BeneficioFaixaUpdate, BeneficioFaixaResponse
 )
 from app.models.administradora import Administradora
 
@@ -324,6 +326,92 @@ async def get_beneficio_historico(
         ))
 
     return result
+
+
+# ==================== FAIXAS DE PARCELAS ====================
+
+@router.get("/{beneficio_id}/faixas", response_model=List[BeneficioFaixaResponse])
+async def list_faixas(
+    beneficio_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Lista faixas de parcelas de um benefício"""
+    beneficio = db.query(Beneficio).filter(Beneficio.id == beneficio_id).first()
+    if not beneficio:
+        raise HTTPException(status_code=404, detail="Benefício não encontrado")
+
+    faixas = db.query(BeneficioFaixa).filter(
+        BeneficioFaixa.beneficio_id == beneficio_id
+    ).order_by(BeneficioFaixa.parcela_inicio).all()
+
+    return faixas
+
+
+@router.post("/{beneficio_id}/faixas", response_model=BeneficioFaixaResponse, status_code=status.HTTP_201_CREATED)
+async def create_faixa(
+    beneficio_id: int,
+    faixa_data: BeneficioFaixaCreate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Cria uma faixa de parcela para o benefício"""
+    beneficio = db.query(Beneficio).filter(Beneficio.id == beneficio_id).first()
+    if not beneficio:
+        raise HTTPException(status_code=404, detail="Benefício não encontrado")
+
+    faixa = BeneficioFaixa(
+        beneficio_id=beneficio_id,
+        **faixa_data.model_dump()
+    )
+    db.add(faixa)
+    db.commit()
+    db.refresh(faixa)
+    return faixa
+
+
+@router.put("/{beneficio_id}/faixas/{faixa_id}", response_model=BeneficioFaixaResponse)
+async def update_faixa(
+    beneficio_id: int,
+    faixa_id: int,
+    faixa_data: BeneficioFaixaUpdate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Atualiza uma faixa de parcela"""
+    faixa = db.query(BeneficioFaixa).filter(
+        BeneficioFaixa.id == faixa_id,
+        BeneficioFaixa.beneficio_id == beneficio_id
+    ).first()
+    if not faixa:
+        raise HTTPException(status_code=404, detail="Faixa não encontrada")
+
+    update_data = faixa_data.model_dump()
+    for key, value in update_data.items():
+        setattr(faixa, key, value)
+
+    db.commit()
+    db.refresh(faixa)
+    return faixa
+
+
+@router.delete("/{beneficio_id}/faixas/{faixa_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_faixa(
+    beneficio_id: int,
+    faixa_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Remove uma faixa de parcela"""
+    faixa = db.query(BeneficioFaixa).filter(
+        BeneficioFaixa.id == faixa_id,
+        BeneficioFaixa.beneficio_id == beneficio_id
+    ).first()
+    if not faixa:
+        raise HTTPException(status_code=404, detail="Faixa não encontrada")
+
+    db.delete(faixa)
+    db.commit()
 
 
 # ==================== TABELAS DE CRÉDITO ====================
