@@ -709,6 +709,24 @@ class FichaClientePDFGenerator:
 
     # ==================== GERAÇÃO DO PDF ====================
 
+    def _draw_cover_border(self, canvas_obj, doc):
+        """Desenha borda dourada dupla na página de capa"""
+        canvas_obj.saveState()
+        w, h = A4
+        margin = 1*cm
+
+        # Borda externa dourada
+        canvas_obj.setStrokeColor(self.cor_dourada)
+        canvas_obj.setLineWidth(2.5)
+        canvas_obj.rect(margin, margin, w - 2*margin, h - 2*margin)
+
+        # Borda interna dourada (dupla)
+        canvas_obj.setLineWidth(0.75)
+        inner = margin + 4*mm
+        canvas_obj.rect(inner, inner, w - 2*inner, h - 2*inner)
+
+        canvas_obj.restoreState()
+
     def generate(self):
         """Gera o PDF completo e retorna os bytes"""
         buffer = BytesIO()
@@ -732,7 +750,15 @@ class FichaClientePDFGenerator:
         # Página 3: Proposta de Orçamento
         self._create_proposta_page(elements)
 
-        doc.build(elements)
+        # Controla qual página está sendo desenhada
+        self._page_num = 0
+
+        def on_page(canvas_obj, doc):
+            self._page_num += 1
+            if self._page_num == 1:
+                self._draw_cover_border(canvas_obj, doc)
+
+        doc.build(elements, onFirstPage=on_page, onLaterPages=lambda c, d: None)
         buffer.seek(0)
         return buffer.getvalue()
 
