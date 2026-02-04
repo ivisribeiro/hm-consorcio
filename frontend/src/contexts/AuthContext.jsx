@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }) => {
     (permissionCode) => {
       if (!user) return false
       // Admin tem todas as permissões
-      if (user.perfil === 'admin') return true
+      if (user.perfil?.codigo === 'admin') return true
       return permissoes.includes(permissionCode)
     },
     [user, permissoes]
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
   const hasAnyPermission = useCallback(
     (permissionCodes) => {
       if (!user) return false
-      if (user.perfil === 'admin') return true
+      if (user.perfil?.codigo === 'admin') return true
       return permissionCodes.some(code => permissoes.includes(code))
     },
     [user, permissoes]
