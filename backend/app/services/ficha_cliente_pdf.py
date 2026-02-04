@@ -624,7 +624,7 @@ class FichaClientePDFGenerator:
             )
 
             content = [
-                [Paragraph(f"<b>Proposta {num_romano}</b>  (   )", title_style)],
+                [Paragraph(f"<b>Proposta {num_romano}</b>  ({'&nbsp;' * 35})", title_style)],
                 [Paragraph("Crédito Pretendido: ____________________", content_style)],
                 [Paragraph("Entrada Sugerida: ____________________", content_style)],
                 [Paragraph("Parcelas a partir: ____________________", content_style)],
@@ -649,8 +649,7 @@ class FichaClientePDFGenerator:
         ]))
         elements.append(row1)
 
-        # Espaço grande entre as fileiras de propostas (2x altura da caixa de observações)
-        elements.append(Spacer(1, 5*cm))
+        elements.append(Spacer(1, 0.3*cm))
 
         # Linha 2 de propostas
         row2 = Table([[make_proposta('III'), make_proposta('IV')]], colWidths=[half_width, half_width])
@@ -669,7 +668,7 @@ class FichaClientePDFGenerator:
         )))
         elements.append(Spacer(1, 0.15*cm))
 
-        obs_box = Table([['  ']], colWidths=[page_width], rowHeights=[2.5*cm])
+        obs_box = Table([['  ']], colWidths=[page_width], rowHeights=[4*cm])
         obs_box.setStyle(TableStyle([
             ('BOX', (0, 0), (-1, -1), 0.75, colors.HexColor('#666666')),
         ]))
