@@ -226,8 +226,8 @@ class FichaClientePDFGenerator:
             ('BACKGROUND', (0, 0), (-1, -1), self.cor_dourada),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
         ]))
         return header_table
 
@@ -258,15 +258,15 @@ class FichaClientePDFGenerator:
         # Espaço inicial
         elements.append(Spacer(1, 2.5*cm))
 
-        # Logo grande centralizado (proporção correta da imagem HM Capital)
+        # Logo grande centralizado (proporção correta da imagem HM Capital 2.08:1)
         if os.path.exists(self.logo_path):
             logo_width = 8*cm
-            logo_height = logo_width / 1.2  # Mantém proporção
+            logo_height = logo_width / 2.08
             logo = Image(self.logo_path, width=logo_width, height=logo_height)
             logo.hAlign = 'CENTER'
             elements.append(logo)
 
-        elements.append(Spacer(1, 2*cm))
+        elements.append(Spacer(1, 1.5*cm))
 
         # Linha decorativa dourada
         line_table = Table([['']], colWidths=[12*cm], rowHeights=[3])
@@ -336,11 +336,11 @@ class FichaClientePDFGenerator:
 
         # Logo pequeno no topo
         if os.path.exists(self.logo_path):
-            logo_width = 4*cm
+            logo_width = 3*cm
             logo = Image(self.logo_path, width=logo_width, height=logo_width/2.08)
             logo.hAlign = 'CENTER'
             elements.append(logo)
-            elements.append(Spacer(1, 0.3*cm))
+            elements.append(Spacer(1, 0.2*cm))
 
         # Header principal verde
         header_table = Table(
@@ -351,11 +351,11 @@ class FichaClientePDFGenerator:
             ('BACKGROUND', (0, 0), (-1, -1), self.cor_verde),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
         ]))
         elements.append(header_table)
-        elements.append(Spacer(1, 0.3*cm))
+        elements.append(Spacer(1, 0.2*cm))
 
         # ============ INFORMAÇÕES CADASTRAIS ============
         elements.append(self._create_section_header("INFORMAÇÕES CADASTRAIS", page_width))
@@ -368,10 +368,10 @@ class FichaClientePDFGenerator:
         def get_cell_style(with_label_bg=True):
             styles = [
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                ('FONTSIZE', (0, 0), (-1, -1), 7),
+                ('FONTSIZE', (0, 0), (-1, -1), 6.5),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('TOPPADDING', (0, 0), (-1, -1), 2),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+                ('TOPPADDING', (0, 0), (-1, -1), 1.5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
                 ('LEFTPADDING', (0, 0), (-1, -1), 3),
             ]
             if with_label_bg:
@@ -434,7 +434,7 @@ class FichaClientePDFGenerator:
         t5.setStyle(get_cell_style())
         elements.append(t5)
 
-        elements.append(Spacer(1, 0.2*cm))
+        elements.append(Spacer(1, 0.15*cm))
 
         # ============ INFORMAÇÕES RESIDENCIAIS ============
         elements.append(self._create_section_header("INFORMAÇÕES RESIDENCIAIS", page_width))
@@ -457,7 +457,7 @@ class FichaClientePDFGenerator:
         t_res2.setStyle(get_cell_style())
         elements.append(t_res2)
 
-        elements.append(Spacer(1, 0.2*cm))
+        elements.append(Spacer(1, 0.15*cm))
 
         # ============ INFORMAÇÕES PROFISSIONAIS ============
         elements.append(self._create_section_header("INFORMAÇÕES PROFISSIONAIS", page_width))
@@ -499,7 +499,7 @@ class FichaClientePDFGenerator:
         t_prof4.setStyle(get_cell_style())
         elements.append(t_prof4)
 
-        elements.append(Spacer(1, 0.2*cm))
+        elements.append(Spacer(1, 0.15*cm))
 
         # ============ INFORMAÇÕES PARA ANÁLISE DE CRÉDITO ============
         elements.append(self._create_section_header("INFORMAÇÕES PARA ANÁLISE DE CRÉDITO", page_width))
@@ -529,12 +529,12 @@ class FichaClientePDFGenerator:
         t_comp = Table(comp_data, colWidths=[8*cm, 2.5*cm, 3*cm, 4*cm])
         t_comp.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('FONTSIZE', (0, 0), (-1, -1), 6.5),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('BACKGROUND', (0, 0), (-1, 0), self.cor_cinza_claro),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 1.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1.5),
             ('LEFTPADDING', (0, 0), (-1, -1), 3),
             ('ALIGN', (1, 1), (1, -1), 'CENTER'),
             ('ALIGN', (2, 1), (2, -1), 'CENTER'),
@@ -553,72 +553,21 @@ class FichaClientePDFGenerator:
         t_rest.setStyle(get_cell_style())
         elements.append(t_rest)
 
-        elements.append(Spacer(1, 0.2*cm))
+        elements.append(Spacer(1, 0.15*cm))
 
         # ============ OBSERVAÇÕES ============
         elements.append(self._create_section_header("OBSERVAÇÕES", page_width))
 
         obs_text = self.cliente.observacoes or ''
-        obs_table = Table([[obs_text]], colWidths=[page_width], rowHeights=[1.2*cm])
+        obs_table = Table([[obs_text]], colWidths=[page_width], rowHeights=[0.8*cm])
         obs_table.setStyle(TableStyle([
             ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
         ]))
         elements.append(obs_table)
-
-        elements.append(Spacer(1, 0.2*cm))
-
-        # ============ SIMULAÇÃO (VAZIA) ============
-        elements.append(self._create_section_header("SIMULAÇÃO", page_width))
-
-        sim_col_width = page_width / 3
-
-        def make_sim_box(num):
-            content = [
-                [Paragraph(f"<b>SIMULAÇÃO {num}</b>", ParagraphStyle('SimTitle', fontSize=8, alignment=TA_CENTER, fontName='Helvetica-Bold'))],
-                ["Crédito Pretendido:"],
-                ["Entrada Sugerida:"],
-                ["Parcelas a partir:"],
-                ["Prazos Aproximados:"],
-            ]
-            t = Table(content, colWidths=[sim_col_width - 0.5*cm])
-            t.setStyle(TableStyle([
-                ('FONTSIZE', (0, 0), (-1, -1), 7),
-                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                ('TOPPADDING', (0, 0), (-1, -1), 2),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-                ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ]))
-            return t
-
-        sim_row = Table(
-            [[make_sim_box(1), make_sim_box(2), make_sim_box(3)]],
-            colWidths=[sim_col_width, sim_col_width, sim_col_width]
-        )
-        sim_row.setStyle(TableStyle([
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
-            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ]))
-        elements.append(sim_row)
-
-        elements.append(Spacer(1, 0.4*cm))
-
-        # Assinatura
-        sig_data = [
-            ['________________________', self.data_formatada, '________________________'],
-            ['LOCAL', 'DATA', 'ASSINATURA DO CLIENTE'],
-        ]
-        sig_table = Table(sig_data, colWidths=[5.5*cm, 4*cm, 5.5*cm])
-        sig_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ]))
-        elements.append(sig_table)
 
         elements.append(PageBreak())
 
@@ -640,11 +589,11 @@ class FichaClientePDFGenerator:
         header_table = Table(
             [[
                 Paragraph("<b>PROPOSTA<br/>DE ORÇAMENTO</b>", ParagraphStyle(
-                    'PropostaHeader', fontSize=18, textColor=colors.white,
-                    alignment=TA_LEFT, leading=22, fontName='Helvetica-Bold'
+                    'PropostaHeader', fontSize=16, textColor=colors.white,
+                    alignment=TA_LEFT, leading=20, fontName='Helvetica-Bold'
                 )),
                 Paragraph("<b>HM.CAPITAL</b>", ParagraphStyle(
-                    'PropostaHeaderRight', fontSize=12, textColor=self.cor_dourada,
+                    'PropostaHeaderRight', fontSize=11, textColor=self.cor_dourada,
                     alignment=TA_RIGHT, fontName='Helvetica-Bold'
                 ))
             ]],
@@ -653,8 +602,8 @@ class FichaClientePDFGenerator:
         header_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), self.cor_verde),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
             ('LEFTPADDING', (0, 0), (0, 0), 15),
             ('RIGHTPADDING', (1, 0), (1, 0), 15),
         ]))
@@ -666,12 +615,12 @@ class FichaClientePDFGenerator:
 
         def make_proposta(num_romano):
             title_style = ParagraphStyle(
-                'PropTitle', fontSize=12, fontName='Helvetica-Bold',
-                alignment=TA_LEFT, textColor=self.cor_verde
+                'PropTitle', fontSize=11, fontName='Helvetica-Bold',
+                alignment=TA_LEFT, textColor=self.cor_verde, leading=14
             )
             content_style = ParagraphStyle(
-                'PropContent', fontSize=10, fontName='Helvetica',
-                spaceAfter=4, leading=14
+                'PropContent', fontSize=9, fontName='Helvetica',
+                spaceAfter=3, leading=16, textColor=colors.HexColor('#333333')
             )
 
             content = [
@@ -684,9 +633,10 @@ class FichaClientePDFGenerator:
 
             t = Table(content, colWidths=[half_width - 0.5*cm])
             t.setStyle(TableStyle([
-                ('TOPPADDING', (0, 0), (-1, -1), 4),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-                ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (0, 0), 6),
+                ('TOPPADDING', (0, 1), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
             ]))
             return t
 
@@ -698,7 +648,9 @@ class FichaClientePDFGenerator:
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ]))
         elements.append(row1)
-        elements.append(Spacer(1, 0.4*cm))
+
+        # Espaço grande entre as fileiras de propostas (2x altura da caixa de observações)
+        elements.append(Spacer(1, 5*cm))
 
         # Linha 2 de propostas
         row2 = Table([[make_proposta('III'), make_proposta('IV')]], colWidths=[half_width, half_width])
@@ -712,21 +664,22 @@ class FichaClientePDFGenerator:
 
         # Observações
         elements.append(Paragraph("<b>OBSERVAÇÕES</b>", ParagraphStyle(
-            'ObsTitle', fontSize=11, alignment=TA_CENTER, fontName='Helvetica-Bold'
+            'ObsTitle', fontSize=10, alignment=TA_CENTER, fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#333333')
         )))
-        elements.append(Spacer(1, 0.2*cm))
+        elements.append(Spacer(1, 0.15*cm))
 
         obs_box = Table([['  ']], colWidths=[page_width], rowHeights=[2.5*cm])
         obs_box.setStyle(TableStyle([
-            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('BOX', (0, 0), (-1, -1), 0.75, colors.HexColor('#666666')),
         ]))
         elements.append(obs_box)
-        elements.append(Spacer(1, 0.4*cm))
+        elements.append(Spacer(1, 0.3*cm))
 
         # Disclaimer
         disclaimer_style = ParagraphStyle(
             'Disclaimer', fontSize=7, alignment=TA_JUSTIFY,
-            leading=9, fontName='Helvetica', textColor=colors.gray
+            leading=9, fontName='Helvetica', textColor=colors.HexColor('#888888')
         )
         elements.append(Paragraph(
             "Declaro ter consciência que a análise de crédito realizada na data de hoje pode resultar na aprovação ou "
@@ -737,7 +690,7 @@ class FichaClientePDFGenerator:
             disclaimer_style
         ))
 
-        elements.append(Spacer(1, 0.8*cm))
+        elements.append(Spacer(1, 0.6*cm))
 
         # Assinatura
         sig_data = [
@@ -747,9 +700,11 @@ class FichaClientePDFGenerator:
         sig_table = Table(sig_data, colWidths=[5.5*cm, 4*cm, 5.5*cm])
         sig_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, 1), 8),
             ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('TEXTCOLOR', (0, 1), (-1, 1), colors.HexColor('#555555')),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
         ]))
         elements.append(sig_table)
 
