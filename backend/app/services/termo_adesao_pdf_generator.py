@@ -14,11 +14,12 @@ import os
 
 
 class TermoAdesaoPDFGenerator:
-    def __init__(self, cliente, beneficio, usuario=None, empresa=None):
+    def __init__(self, cliente, beneficio, usuario=None, empresa=None, representante=None):
         self.cliente = cliente
         self.beneficio = beneficio
         self.usuario = usuario
         self.empresa = empresa
+        self.representante = representante
         self.width, self.height = A4
         self.styles = getSampleStyleSheet()
         self._setup_styles()
@@ -32,8 +33,8 @@ class TermoAdesaoPDFGenerator:
         self.cor_header = colors.HexColor('#1a1a1a')
         self.cor_section_bg = colors.HexColor('#f5f5f5')
 
-        # Caminho do logo
-        self.logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'logo-white-bg.jpg')
+        # Caminho do logo (Capital Banq - mesmo do contrato de venda)
+        self.logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'logo-capital-banq.png')
 
         # Data atual
         self.data_atual = datetime.now()
@@ -70,8 +71,8 @@ class TermoAdesaoPDFGenerator:
             fontSize=9,
             alignment=TA_CENTER,
             fontName='Helvetica-Bold',
-            spaceBefore=10,
-            spaceAfter=5
+            spaceBefore=6,
+            spaceAfter=3
         ))
 
         self.styles.add(ParagraphStyle(
@@ -138,24 +139,21 @@ class TermoAdesaoPDFGenerator:
 
     def _create_header(self, elements):
         """Cabeçalho do documento"""
-        # Logo
+        # Logo Capital Banq (proporção 1.44:1)
         if os.path.exists(self.logo_path):
-            logo = Image(self.logo_path, width=4*cm, height=1.5*cm)
+            logo_width = 3.5*cm
+            logo_height = logo_width / 1.44
+            logo = Image(self.logo_path, width=logo_width, height=logo_height)
             logo.hAlign = 'CENTER'
             elements.append(logo)
-            elements.append(Spacer(1, 0.2*cm))
+            elements.append(Spacer(1, 0.1*cm))
         else:
-            # Nome da empresa (fallback se não houver logo)
             elements.append(Paragraph(self.empresa_nome, self.styles['TermoCompanyHeader']))
-
-        elements.append(Paragraph(self.empresa_endereco, self.styles['TermoCompanySubHeader']))
-        elements.append(Paragraph(f"CNPJ: {self.empresa_cnpj}", self.styles['TermoCompanySubHeader']))
-        elements.append(Spacer(1, 0.3*cm))
 
         # Título
         title = "TERMO DE INTERMEDIAÇÃO E CONSULTORIA DE INCLUSÃO AO CLIENTE NO GRUPO DE CONSÓRCIO"
         elements.append(Paragraph(title, self.styles['TermoDocTitle']))
-        elements.append(Spacer(1, 0.3*cm))
+        elements.append(Spacer(1, 0.15*cm))
 
     def _add_footer(self, canvas, doc):
         canvas.saveState()
@@ -178,6 +176,22 @@ class TermoAdesaoPDFGenerator:
         estado_civil_map = {'solteiro': 'Solteiro', 'casado': 'Casado', 'divorciado': 'Divorciado', 'viuvo': 'Viúvo', 'uniao_estavel': 'União Estável'}
         estado_civil = estado_civil_map.get(self.cliente.estado_civil, self.cliente.estado_civil or '')
 
+        # Estilo base para todas as tabelas de dados
+        def table_style():
+            return TableStyle([
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                ('FONTSIZE', (0, 0), (-1, -1), 7),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ])
+
+        # Proporções baseadas em page_width
+        col4 = [page_width * 0.30, page_width * 0.28, page_width * 0.20, page_width * 0.22]
+        col3 = [page_width / 3] * 3
+        col2 = [page_width / 2] * 2
+
         # Tabela de dados cadastrais
         dados = [
             [f"NOME: {self.cliente.nome or ''}", f"SEXO: {sexo}", f"DATA DE NASC.:\n{self._format_date(self.cliente.data_nascimento)}", f"ESTADO CIVIL:\n{estado_civil}"],
@@ -185,56 +199,31 @@ class TermoAdesaoPDFGenerator:
             [f"TIPO DOCUMENTO: RG ({self.cliente.identidade or ''})", f"DATA EMISSÃO:\n{self._format_date(self.cliente.data_expedicao)}", f"ORGÃO EXP.: {self.cliente.orgao_expedidor or ''}", f"CPF: {self._format_cpf(self.cliente.cpf)}"],
         ]
 
-        t = Table(dados, colWidths=[5*cm, 5*cm, 3.5*cm, 4*cm])
-        t.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t = Table(dados, colWidths=col4)
+        t.setStyle(table_style())
         elements.append(t)
 
         # Endereço
         endereco = f"{self.cliente.logradouro or ''}, {self.cliente.numero or ''}, {self.cliente.bairro or ''}, {self.cliente.cidade or ''} - {self.cliente.estado or ''}, {self.cliente.cep or ''}"
         end_data = [[f"ENDEREÇO: {endereco}"]]
         t_end = Table(end_data, colWidths=[page_width])
-        t_end.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t_end.setStyle(table_style())
         elements.append(t_end)
 
         # Telefones
         tel_data = [
             ["TELEFONE RESIDENCIAL:", "TELEFONE COMERCIAL:", f"CELULAR: {self.cliente.telefone or ''}"],
         ]
-        t_tel = Table(tel_data, colWidths=[5.8*cm, 5.8*cm, 5.8*cm])
-        t_tel.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t_tel = Table(tel_data, colWidths=col3)
+        t_tel.setStyle(table_style())
         elements.append(t_tel)
 
         # Email e cônjuge
         email_data = [
             [f"E-MAIL: {self.cliente.email or ''}", f"CÔNJUGE: {self.cliente.conjuge_nome or ''}"],
         ]
-        t_email = Table(email_data, colWidths=[8.7*cm, 8.7*cm])
-        t_email.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t_email = Table(email_data, colWidths=col2)
+        t_email.setStyle(table_style())
         elements.append(t_email)
 
         # Profissão, empresa, renda
@@ -242,68 +231,51 @@ class TermoAdesaoPDFGenerator:
         prof_data = [
             [f"PROFISSÃO: {self.cliente.cargo or ''}", f"EMPRESA: {self.cliente.empresa_trabalho or ''}", f"RENDA: {renda}"],
         ]
-        t_prof = Table(prof_data, colWidths=[5.8*cm, 5.8*cm, 5.8*cm])
-        t_prof.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t_prof = Table(prof_data, colWidths=col3)
+        t_prof.setStyle(table_style())
         elements.append(t_prof)
 
         # Patrimônio
         pat_data = [
             ["PATRIMÔNIO:", "IMÓVEL ( )", "VEÍCULOS ( )", "INVESTIMENTOS:"],
         ]
-        t_pat = Table(pat_data, colWidths=[4.3*cm, 4.3*cm, 4.3*cm, 4.5*cm])
-        t_pat.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t_pat = Table(pat_data, colWidths=[page_width * 0.25, page_width * 0.25, page_width * 0.25, page_width * 0.25])
+        t_pat.setStyle(table_style())
         elements.append(t_pat)
 
         # REPRESENTANTE LEGAL
-        elements.append(Spacer(1, 0.2*cm))
         elements.append(Paragraph("<b>REPRESENTANTE LEGAL</b>", self.styles['TermoSectionTitle']))
 
-        rep_nome = self.usuario.nome if self.usuario else ''
+        rep_nome = ''
+        rep_razao = ''
+        rep_cnpj = ''
+        if self.representante:
+            rep_nome = self.representante.nome or ''
+            rep_razao = self.representante.razao_social or ''
+            rep_cnpj = self.representante.cnpj or ''
+        elif self.usuario:
+            rep_nome = self.usuario.nome or ''
+
         rep_data = [
-            [f"NOME: {rep_nome}", f"CPF:"],
+            [f"NOME: {rep_nome}", f"RAZÃO SOCIAL: {rep_razao}"],
+            [f"CPF/CNPJ: {rep_cnpj}", ""],
         ]
-        t_rep = Table(rep_data, colWidths=[8.7*cm, 8.7*cm])
-        t_rep.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t_rep = Table(rep_data, colWidths=col2)
+        t_rep.setStyle(table_style())
         elements.append(t_rep)
 
         # CARACTERÍSTICAS DO GRUPO / COTA
-        elements.append(Spacer(1, 0.2*cm))
         elements.append(Paragraph("<b>CARACTERÍSTICAS DO GRUPO / COTA</b>", self.styles['TermoSectionTitle']))
 
         carac_data = [
             [f"VALOR DO CRÉDITO NA DATA DA ADMISSÃO: {self._format_currency(self.beneficio.valor_credito)}", f"PRAZO DE DURAÇÃO: ({self.beneficio.prazo_grupo or ''}) MESES -"],
             [f"NÚMERO MÁXIMO DE PARTICIPANTES: {self.beneficio.qtd_participantes or '9.999'}", ""],
         ]
-        t_carac = Table(carac_data, colWidths=[8.7*cm, 8.7*cm])
-        t_carac.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        t_carac = Table(carac_data, colWidths=col2)
+        t_carac.setStyle(table_style())
         elements.append(t_carac)
 
         # PERCENTUAIS DE TAXAS
-        elements.append(Spacer(1, 0.2*cm))
         elements.append(Paragraph("<b>PERCENTUAIS DE TAXAS E CONTRIBUIÇÕES MENSAIS</b>", self.styles['TermoSectionTitle']))
 
         taxa_adm = f"{self.beneficio.taxa_administracao or 0}%"
@@ -314,23 +286,24 @@ class TermoAdesaoPDFGenerator:
         indice_ipca = "(X) IPCA" if indice == 'IPCA' else "( ) IPCA"
 
         taxas_data = [
-            [f"TAXA DE ADMINISTRAÇÃO TOTAL: {taxa_adm}", f"FUNDO DE RESERVA: {fundo_reserva}"],
-            [indice_incc, indice_ipca, "( ) OUTROS", f"SEGURO DE VIDA MENSAL: {self.beneficio.seguro_prestamista or 0}%"],
+            [f"TAXA DE ADMINISTRAÇÃO TOTAL: {taxa_adm}", f"FUNDO DE RESERVA: {fundo_reserva}", "", ""],
+            [indice_incc, indice_ipca, "( ) OUTROS", f"SEGURO VIDA: {self.beneficio.seguro_prestamista or 0}%"],
         ]
-        t_taxas = Table(taxas_data, colWidths=[8.7*cm, 4.3*cm, 2.2*cm, 2.2*cm])
+        t_taxas = Table(taxas_data, colWidths=[page_width * 0.40, page_width * 0.25, page_width * 0.13, page_width * 0.22])
         t_taxas.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('TOPPADDING', (0, 0), (-1, -1), 3),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
             ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ('SPAN', (0, 0), (0, 0)),
-            ('SPAN', (1, 0), (3, 0)),
+            ('SPAN', (0, 0), (1, 0)),
+            ('SPAN', (2, 0), (3, 0)),
         ]))
         elements.append(t_taxas)
 
         # Texto sobre art. 5
-        elements.append(Spacer(1, 0.2*cm))
+        elements.append(Spacer(1, 0.1*cm))
         elements.append(Paragraph(
             "EM CONFORMIDADE COM ART. 5° DO REGULAMENTO DE CONSÓRCIO, SERÁ COBRADO DA TAXA DE ADMINISTRAÇÃO TOTAL:",
             self.styles['TermoSmallText']
@@ -345,7 +318,7 @@ class TermoAdesaoPDFGenerator:
             ["Parcela 13 a parcela 66", "0,862%", "0,005%", "0,027%", "0,000%", self._format_currency(valor_parcela)],
             [f"Parcela {self.beneficio.prazo_grupo or 67}", "0,864%", "0,006%", "0,030%", "0,000%", self._format_currency(valor_parcela)],
         ]
-        t_faixas = Table(faixas_data, colWidths=[3.5*cm, 2.5*cm, 3*cm, 2.5*cm, 2.5*cm, 3.5*cm])
+        t_faixas = Table(faixas_data, colWidths=[page_width * 0.20, page_width * 0.15, page_width * 0.17, page_width * 0.14, page_width * 0.14, page_width * 0.20])
         t_faixas.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             ('FONTSIZE', (0, 0), (-1, -1), 7),
@@ -357,14 +330,13 @@ class TermoAdesaoPDFGenerator:
         ]))
         elements.append(t_faixas)
 
-        elements.append(Spacer(1, 0.2*cm))
+        elements.append(Spacer(1, 0.1*cm))
         elements.append(Paragraph(
             f"EM CONFORMIDADE COM OS REGULAMENTO INTERNO DO {self.empresa_nome}, O CLIENTE TEM ACESSO TOTAL AO DESTINO DOS VALORES PAGOS.",
             self.styles['TermoSmallText']
         ))
 
         # Declarações e Autorizações
-        elements.append(Spacer(1, 0.3*cm))
         elements.append(Paragraph("<b>Declarações e Autorizações</b>", self.styles['TermoSectionTitle']))
 
         elements.append(Paragraph(
@@ -525,43 +497,63 @@ class TermoAdesaoPDFGenerator:
             self.styles['TermoSmallText']
         ))
 
-        elements.append(Spacer(1, 0.4*cm))
+        elements.append(Spacer(1, 0.5*cm))
 
-        # Data e representante
-        rep_nome = self.usuario.nome if self.usuario else ''
-        empresa_nome = self.empresa.nome_fantasia if self.empresa else self.empresa_nome
+        # Dados do representante
+        page_width = self.width - 3*cm
+        col2 = [page_width / 2] * 2
+
+        rep_nome = ''
+        rep_razao = ''
+        rep_cnpj = self.empresa_cnpj
+        if self.representante:
+            rep_nome = self.representante.nome or ''
+            rep_razao = self.representante.razao_social or ''
+            rep_cnpj = self.representante.cnpj or self.empresa_cnpj
+        elif self.usuario:
+            rep_nome = self.usuario.nome or ''
 
         data_rep = [
-            [f"DATA: {self.data_formatada}", f"Representante: {empresa_nome}", "vendedor:"],
+            ["DATA", "REPRESENTANTE", "RAZÃO SOCIAL"],
+            [self.data_formatada, rep_nome, rep_razao],
+            ["CNPJ", "", ""],
+            [rep_cnpj, "", ""],
         ]
-        t_data = Table(data_rep, colWidths=[5.8*cm, 5.8*cm, 5.8*cm])
+        col3 = [page_width / 3] * 3
+        t_data = Table(data_rep, colWidths=col3)
         t_data.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 0), (-1, 0), self.cor_section_bg),
+            ('BACKGROUND', (0, 2), (-1, 2), self.cor_section_bg),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
             ('LEFTPADDING', (0, 0), (-1, -1), 4),
         ]))
         elements.append(t_data)
 
-        # Espaço para assinaturas
-        elements.append(Spacer(1, 1*cm))
+        # Assinaturas
+        elements.append(Spacer(1, 1.2*cm))
 
         sig_data = [
             ["_" * 40, "_" * 40],
             ["ASSINATURA DO REPRESENTANTE", "ASSINATURA DO CONSORCIADO"],
         ]
-        t_sig = Table(sig_data, colWidths=[8.7*cm, 8.7*cm])
+        t_sig = Table(sig_data, colWidths=col2)
         t_sig.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, 1), 8),
+            ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
             ('TOPPADDING', (0, 0), (-1, -1), 5),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
         ]))
         elements.append(t_sig)
 
         # Aviso
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.8*cm))
         elements.append(Paragraph(
             "ATENÇÃO: NÃO HÁ GARANTIA DE DATA DE CONTEMPLAÇÃO",
             self.styles['TermoWarning']
@@ -572,7 +564,7 @@ class TermoAdesaoPDFGenerator:
         aviso_data = [
             ["Este contrato somente será válido mediante pagamento e assinatura digital do cliente e do representante."],
         ]
-        t_aviso = Table(aviso_data, colWidths=[17.4*cm])
+        t_aviso = Table(aviso_data, colWidths=[page_width])
         t_aviso.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
