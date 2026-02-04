@@ -576,6 +576,94 @@ async def fix_unidades_table():
     return result
 
 
+@app.post("/debug/reset-database")
+async def reset_database():
+    """
+    Reseta o banco de dados:
+    - Trunca todas as tabelas (exceto usuarios, perfis, permissoes)
+    - Cria/atualiza usuário admin ivis_ribeiro@hotmail.com
+    """
+    from sqlalchemy import text
+    from app.core.database import engine
+    import bcrypt
+
+    steps = []
+
+    try:
+        with engine.connect() as conn:
+            # 1. Truncar tabelas de dados (ordem importa por causa das FKs)
+            tables_to_truncate = [
+                'beneficio_faixas',
+                'beneficio_historicos',
+                'beneficios',
+                'clientes',
+                'tabelas_credito',
+                'administradoras',
+                'representantes',
+                'consultores',
+                'configuracoes',
+                'unidades',
+                'empresas',
+            ]
+
+            for table in tables_to_truncate:
+                try:
+                    conn.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
+                    steps.append(f"truncated {table}")
+                except Exception as e:
+                    steps.append(f"skip {table}: {str(e)[:30]}")
+
+            conn.commit()
+
+            # 2. Limpar usuarios (exceto admin)
+            conn.execute(text("DELETE FROM usuarios WHERE email != 'ivis_ribeiro@hotmail.com'"))
+            conn.commit()
+            steps.append("deleted non-admin users")
+
+            # 3. Criar/atualizar admin
+            result = conn.execute(text("SELECT id FROM usuarios WHERE email = 'ivis_ribeiro@hotmail.com'"))
+            admin_row = result.fetchone()
+
+            senha_hash = bcrypt.hashpw(b"admin123", bcrypt.gensalt()).decode('utf-8')
+
+            if admin_row:
+                conn.execute(text("""
+                    UPDATE usuarios SET senha_hash = :senha, nome = 'Ivis Ribeiro', perfil_id = 1, ativo = true
+                    WHERE email = 'ivis_ribeiro@hotmail.com'
+                """), {"senha": senha_hash})
+                steps.append("updated admin password to admin123")
+            else:
+                conn.execute(text("""
+                    INSERT INTO usuarios (nome, email, senha_hash, perfil_id, ativo)
+                    VALUES ('Ivis Ribeiro', 'ivis_ribeiro@hotmail.com', :senha, 1, true)
+                """), {"senha": senha_hash})
+                steps.append("created admin user")
+
+            conn.commit()
+
+            # 4. Criar unidade padrão (necessária para o sistema)
+            conn.execute(text("""
+                INSERT INTO unidades (id, nome, codigo, ativo)
+                VALUES (1, 'Matriz', 'MTZ', true)
+                ON CONFLICT (id) DO NOTHING
+            """))
+            conn.commit()
+            steps.append("created default unidade")
+
+            # 5. Atualizar unidade_id do admin
+            conn.execute(text("""
+                UPDATE usuarios SET unidade_id = 1 WHERE email = 'ivis_ribeiro@hotmail.com'
+            """))
+            conn.commit()
+            steps.append("linked admin to unidade")
+
+        return {"status": "success", "steps": steps, "login": {"email": "ivis_ribeiro@hotmail.com", "senha": "admin123"}}
+
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "steps": steps, "trace": traceback.format_exc()}
+
+
 @app.post("/debug/seed-permissoes")
 async def seed_permissoes():
     """Popula a tabela de permissões"""
