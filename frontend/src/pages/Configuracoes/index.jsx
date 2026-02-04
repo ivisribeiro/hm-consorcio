@@ -78,20 +78,22 @@ const Configuracoes = () => {
   }
 
   const handlePermissaoChange = (perfilId, codigo, checked) => {
+    const key = String(perfilId)
     setMatriz(prev => {
-      const perfilPermissoes = prev[perfilId] || []
+      const perfilPermissoes = prev[key] || []
       if (checked) {
-        return { ...prev, [perfilId]: [...perfilPermissoes, codigo] }
+        return { ...prev, [key]: [...perfilPermissoes, codigo] }
       } else {
-        return { ...prev, [perfilId]: perfilPermissoes.filter(p => p !== codigo) }
+        return { ...prev, [key]: perfilPermissoes.filter(p => p !== codigo) }
       }
     })
   }
 
   const handleSavePermissoes = async (perfilId) => {
+    const key = String(perfilId)
     setSavingPermissoes(true)
     try {
-      await perfisApi.updatePermissoes(perfilId, matriz[perfilId] || [])
+      await perfisApi.updatePermissoes(perfilId, matriz[key] || [])
       const perfil = perfis.find(p => p.id === perfilId)
       message.success(`Permissões do perfil ${perfil?.nome || perfilId} salvas com sucesso`)
     } catch (error) {
@@ -441,7 +443,7 @@ const Configuracoes = () => {
                     align: 'center',
                     render: (_, record) => (
                       <Checkbox
-                        checked={(matriz[perfil.id] || []).includes(record.codigo)}
+                        checked={(matriz[String(perfil.id)] || []).includes(record.codigo)}
                         onChange={(e) => handlePermissaoChange(perfil.id, record.codigo, e.target.checked)}
                         disabled={perfil.codigo === 'admin'}
                       />

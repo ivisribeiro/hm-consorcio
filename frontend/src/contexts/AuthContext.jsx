@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { message } from 'antd'
 import { authApi } from '../api/auth'
+import { perfisApi } from '../api/permissoes'
 
 const AuthContext = createContext(null)
 
@@ -14,7 +15,19 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [permissoes, setPermissoes] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Carrega permissões do usuário
+  const loadPermissoes = async () => {
+    try {
+      const data = await perfisApi.getMinhasPermissoes()
+      setPermissoes(data.permissoes || [])
+    } catch (error) {
+      console.error('Erro ao carregar permissões:', error)
+      setPermissoes([])
+    }
+  }
 
   // Verifica se há sessão ativa ao carregar
   useEffect(() => {
@@ -27,12 +40,14 @@ export const AuthProvider = ({ children }) => {
           // Verifica se o token ainda é válido
           const userData = await authApi.getMe()
           setUser(userData)
+          await loadPermissoes()
         } catch (error) {
           // Token inválido, limpa storage
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
           localStorage.removeItem('user')
           setUser(null)
+          setPermissoes([])
         }
       }
 
@@ -53,6 +68,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(data.user))
 
       setUser(data.user)
+      await loadPermissoes()
       message.success(`Bem-vindo, ${data.user.nome}!`)
 
       return { success: true }
@@ -72,14 +88,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user')
 
     setUser(null)
+    setPermissoes([])
     message.info('Logout realizado com sucesso')
   }, [])
 
   // Verifica se é autenticado
   const isAuthenticated = !!user
 
-  // Verifica permissões
-  const hasPermission = useCallback(
+  // Verifica se usuário tem um dos perfis permitidos
+  const hasRole = useCallback(
     (allowedRoles) => {
       if (!user) return false
       return allowedRoles.includes(user.perfil)
@@ -87,13 +104,37 @@ export const AuthProvider = ({ children }) => {
     [user]
   )
 
+  // Verifica se usuário tem permissão específica (pelo código)
+  const hasPermission = useCallback(
+    (permissionCode) => {
+      if (!user) return false
+      // Admin tem todas as permissões
+      if (user.perfil === 'admin') return true
+      return permissoes.includes(permissionCode)
+    },
+    [user, permissoes]
+  )
+
+  // Verifica se tem pelo menos uma das permissões
+  const hasAnyPermission = useCallback(
+    (permissionCodes) => {
+      if (!user) return false
+      if (user.perfil === 'admin') return true
+      return permissionCodes.some(code => permissoes.includes(code))
+    },
+    [user, permissoes]
+  )
+
   const value = {
     user,
+    permissoes,
     loading,
     isAuthenticated,
     login,
     logout,
+    hasRole,
     hasPermission,
+    hasAnyPermission,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

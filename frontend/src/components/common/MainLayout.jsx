@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, Avatar, Dropdown, Space, Typography } from 'antd'
 import {
@@ -25,71 +25,86 @@ import { useAuth } from '../../contexts/AuthContext'
 const { Header, Sider, Content, Footer } = Layout
 const { Text } = Typography
 
-const menuItems = [
+// Definição dos itens de menu com permissões requeridas
+// Códigos de permissão seguem o padrão do backend: modulo.acao
+const allMenuItems = [
   {
     key: '/',
     icon: <DashboardOutlined />,
     label: 'Dashboard',
+    permission: null, // Todos podem ver
   },
   {
     key: '/clientes',
     icon: <TeamOutlined />,
     label: 'Clientes',
+    permission: 'clientes.visualizar',
   },
   {
     key: '/beneficios',
     icon: <GiftOutlined />,
     label: 'Benefícios',
+    permission: 'beneficios.visualizar',
   },
   {
     key: '/relatorios',
     icon: <FilePdfOutlined />,
     label: 'Relatórios',
+    permission: 'relatorios.ficha', // Qualquer permissão de relatórios
   },
   {
     key: 'cadastros',
     icon: <SettingOutlined />,
     label: 'Cadastros',
+    permission: null, // Visível se tiver pelo menos um filho
     children: [
       {
         key: '/usuarios',
         icon: <UserOutlined />,
         label: 'Usuários',
+        permission: 'cadastros.usuarios',
       },
       {
         key: '/unidades',
         icon: <ApartmentOutlined />,
         label: 'Unidades',
+        permission: 'cadastros.unidades',
       },
       {
         key: '/empresas',
         icon: <ShopOutlined />,
         label: 'Empresas',
+        permission: 'cadastros.empresas',
       },
       {
         key: '/representantes',
         icon: <IdcardOutlined />,
         label: 'Representantes',
+        permission: 'cadastros.representantes',
       },
       {
         key: '/consultores',
         icon: <SolutionOutlined />,
         label: 'Consultores',
+        permission: 'cadastros.consultores',
       },
       {
         key: '/tabelas-credito',
         icon: <TableOutlined />,
         label: 'Tabelas de Crédito',
+        permission: 'cadastros.tabelas_credito',
       },
       {
         key: '/administradoras',
         icon: <BankOutlined />,
         label: 'Administradoras',
+        permission: 'cadastros.administradoras',
       },
       {
         key: '/perfis',
         icon: <SafetyCertificateOutlined />,
         label: 'Perfis',
+        permission: 'configuracoes.perfis',
       },
     ],
   },
@@ -97,6 +112,7 @@ const menuItems = [
     key: '/configuracoes',
     icon: <SettingOutlined />,
     label: 'Configurações',
+    permission: 'configuracoes.sistema',
   },
 ]
 
@@ -104,7 +120,32 @@ const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuth()
+  const { user, logout, hasPermission } = useAuth()
+
+  // Filtra itens do menu baseado nas permissões do usuário
+  const filteredMenuItems = useMemo(() => {
+    const filterItems = (items) => {
+      return items
+        .filter(item => {
+          // Se não tem permissão definida, sempre mostra
+          if (!item.permission) return true
+          // Verifica se tem a permissão
+          return hasPermission(item.permission)
+        })
+        .map(item => {
+          // Se tem filhos, filtra recursivamente
+          if (item.children) {
+            const filteredChildren = filterItems(item.children)
+            // Só mostra o item pai se tiver pelo menos um filho visível
+            if (filteredChildren.length === 0) return null
+            return { ...item, children: filteredChildren }
+          }
+          return item
+        })
+        .filter(Boolean) // Remove nulls
+    }
+    return filterItems(allMenuItems)
+  }, [hasPermission])
 
   const handleMenuClick = ({ key }) => {
     if (key.startsWith('/')) {
@@ -178,7 +219,7 @@ const MainLayout = () => {
           mode="inline"
           selectedKeys={[location.pathname]}
           defaultOpenKeys={['cadastros']}
-          items={menuItems}
+          items={filteredMenuItems}
           onClick={handleMenuClick}
         />
       </Sider>
