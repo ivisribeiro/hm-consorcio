@@ -9,8 +9,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '007_add_beneficio_faixas'
-down_revision = '006_add_perfis_table'
+revision = '007'
+down_revision = '006'
 branch_labels = None
 depends_on = None
 
