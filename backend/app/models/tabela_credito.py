@@ -16,6 +16,7 @@ class TabelaCredito(Base):
     fundo_reserva = Column(Numeric(5, 2), default=2.5)
     taxa_administracao = Column(Numeric(5, 2), default=26.0)
     seguro_prestamista = Column(Numeric(5, 2), default=0.0)
+    valor_intermediacao = Column(Numeric(12, 2), default=0)
     indice_correcao = Column(String(20), default="INCC")
     qtd_participantes = Column(Integer, default=4076)
     tipo_plano = Column(String(50), default="Normal")

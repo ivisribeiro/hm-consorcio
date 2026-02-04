@@ -68,6 +68,7 @@ const TabelasCreditoList = () => {
         ...tabela,
         valor_credito: parseFloat(tabela.valor_credito),
         parcela: parseFloat(tabela.parcela),
+        valor_intermediacao: tabela.valor_intermediacao ? parseFloat(tabela.valor_intermediacao) : 0,
         fundo_reserva: parseFloat(tabela.fundo_reserva),
         taxa_administracao: parseFloat(tabela.taxa_administracao),
         seguro_prestamista: parseFloat(tabela.seguro_prestamista),
@@ -79,6 +80,7 @@ const TabelasCreditoList = () => {
         fundo_reserva: 2.5,
         taxa_administracao: 26.0,
         seguro_prestamista: 0,
+        valor_intermediacao: 0,
         indice_correcao: 'INCC',
         qtd_participantes: 4076,
         tipo_plano: 'Normal',
@@ -143,9 +145,9 @@ const TabelasCreditoList = () => {
   }
 
   const downloadTemplate = () => {
-    const template = 'nome;tipo_bem;prazo;valor_credito;parcela;fundo_reserva;taxa_administracao;seguro_prestamista;indice_correcao;qtd_participantes;tipo_plano\n' +
-      'Imóvel 100K 120m;imovel;120;100000;850.00;2.5;26.0;0;INCC;4076;Normal\n' +
-      'Carro 50K 80m;carro;80;50000;650.00;2.5;26.0;0;INCC;4076;Normal'
+    const template = 'nome;tipo_bem;prazo;valor_credito;parcela;valor_intermediacao;fundo_reserva;taxa_administracao;seguro_prestamista;indice_correcao;qtd_participantes;tipo_plano\n' +
+      'Imóvel 100K 120m;imovel;120;100000;850.00;500;2.5;26.0;0;INCC;4076;Normal\n' +
+      'Carro 50K 80m;carro;80;50000;650.00;300;2.5;26.0;0;INCC;4076;Normal'
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
@@ -195,6 +197,12 @@ const TabelasCreditoList = () => {
       dataIndex: 'parcela',
       key: 'parcela',
       render: (val) => formatCurrency(val),
+    },
+    {
+      title: 'Intermediação',
+      dataIndex: 'valor_intermediacao',
+      key: 'valor_intermediacao',
+      render: (val) => val ? formatCurrency(val) : '-',
     },
     {
       title: 'Prazo',
@@ -350,6 +358,19 @@ const TabelasCreditoList = () => {
                 parser={value => value.replace(/\./g, '')}
               />
             </Form.Item>
+
+            <Form.Item
+              name="valor_intermediacao"
+              label="Intermediação (R$)"
+              style={{ flex: 1 }}
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                min={0}
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                parser={value => value.replace(/\./g, '')}
+              />
+            </Form.Item>
           </Space>
 
           <Space style={{ display: 'flex', gap: 16 }}>
@@ -461,7 +482,7 @@ const TabelasCreditoList = () => {
             description={
               <div>
                 <p>Colunas: nome, tipo_bem, prazo, valor_credito, parcela</p>
-                <p>Opcionais: fundo_reserva, taxa_administracao, seguro_prestamista, indice_correcao, qtd_participantes, tipo_plano</p>
+                <p>Opcionais: valor_intermediacao, fundo_reserva, taxa_administracao, seguro_prestamista, indice_correcao, qtd_participantes, tipo_plano</p>
                 <p>Separador: vírgula (,) ou ponto-e-vírgula (;)</p>
               </div>
             }

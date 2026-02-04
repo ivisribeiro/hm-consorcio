@@ -533,6 +533,7 @@ async def importar_tabelas_csv(
             fundo_reserva = parse_number(row.get('fundo_reserva', ''), Decimal('2.5'))
             taxa_administracao = parse_number(row.get('taxa_administracao', ''), Decimal('26.0'))
             seguro_prestamista = parse_number(row.get('seguro_prestamista', ''), Decimal('0'))
+            valor_intermediacao = parse_number(row.get('valor_intermediacao', ''), Decimal('0'))
             indice_correcao = row.get('indice_correcao', 'INCC') or 'INCC'
             qtd_participantes = int(row.get('qtd_participantes', '') or '4076')
             tipo_plano = row.get('tipo_plano', 'Normal') or 'Normal'
@@ -557,6 +558,7 @@ async def importar_tabelas_csv(
                 fundo_reserva=fundo_reserva,
                 taxa_administracao=taxa_administracao,
                 seguro_prestamista=seguro_prestamista,
+                valor_intermediacao=valor_intermediacao,
                 indice_correcao=indice_correcao,
                 qtd_participantes=qtd_participantes,
                 tipo_plano=tipo_plano,

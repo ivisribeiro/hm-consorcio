@@ -115,6 +115,7 @@ class TabelaCreditoBase(BaseModel):
     fundo_reserva: Decimal = Decimal("2.5")
     taxa_administracao: Decimal = Decimal("26.0")
     seguro_prestamista: Decimal = Decimal("0.0")
+    valor_intermediacao: Decimal = Decimal("0")
     indice_correcao: str = "INCC"
     qtd_participantes: int = 4076
     tipo_plano: str = "Normal"
@@ -134,6 +135,7 @@ class TabelaCreditoUpdate(BaseModel):
     fundo_reserva: Optional[Decimal] = None
     taxa_administracao: Optional[Decimal] = None
     seguro_prestamista: Optional[Decimal] = None
+    valor_intermediacao: Optional[Decimal] = None
     indice_correcao: Optional[str] = None
     qtd_participantes: Optional[int] = None
     tipo_plano: Optional[str] = None

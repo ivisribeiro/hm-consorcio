@@ -477,7 +477,7 @@ class ContratoVendaPDFGenerator:
                     <div class="field"><div class="label">Prazo Grupo</div><div class="value">{self._safe(b, 'prazo_grupo')}</div></div>
                     <div class="field"><div class="label">Prazo Cota</div><div class="value">{self._safe(b, 'prazo_cota', self._safe(b, 'prazo_grupo'))}</div></div>
                     <div class="field"><div class="label">Valor do Credito</div><div class="value">{self._format_currency(b.valor_credito)}</div></div>
-                    <div class="field"><div class="label">Valor 1a Parcela</div><div class="value">{self._format_currency(self.valor_primeira_parcela)}</div></div>
+                    <div class="field"><div class="label">Valor Adesao</div><div class="value">{self._format_currency(self.valor_primeira_parcela)}</div></div>
                     <div class="field"><div class="label">Indice Correcao</div><div class="value">{self._safe(b, 'indice_correcao', 'INCC')}</div></div>
                 </div>
                 <div class="row">
