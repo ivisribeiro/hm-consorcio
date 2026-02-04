@@ -25,4 +25,9 @@ export const usuariosApi = {
     const response = await apiClient.delete(`/usuarios/${id}`)
     return response.data
   },
+
+  changePassword: async (id, nova_senha) => {
+    const response = await apiClient.put(`/usuarios/${id}/senha`, { nova_senha })
+    return response.data
+  },
 }

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 
@@ -8,6 +9,10 @@ from app.models.usuario import Usuario
 from app.models.perfil import Perfil
 from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioResponse, PerfilInfo
 from app.api.v1.endpoints.perfis import check_permission
+
+
+class AlterarSenhaRequest(BaseModel):
+    nova_senha: str = Field(..., min_length=6)
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
@@ -197,6 +202,30 @@ async def update_usuario(
     usuario = db.query(Usuario).options(joinedload(Usuario.perfil_obj)).filter(Usuario.id == usuario.id).first()
 
     return usuario_to_response(usuario)
+
+
+@router.put("/{usuario_id}/senha")
+async def alterar_senha_usuario(
+    usuario_id: int,
+    dados: AlterarSenhaRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(check_permission("cadastros.usuarios"))
+):
+    """
+    Altera a senha de um usuário (apenas admin/gestor)
+    """
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado"
+        )
+
+    usuario.senha_hash = get_password_hash(dados.nova_senha)
+    db.commit()
+
+    return {"message": "Senha alterada com sucesso"}
 
 
 @router.delete("/{usuario_id}", status_code=status.HTTP_204_NO_CONTENT)

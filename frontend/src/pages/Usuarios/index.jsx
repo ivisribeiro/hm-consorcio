@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Table, Button, Input, Space, Card, Tag, message, Popconfirm, Modal, Form, Select } from 'antd'
-import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons'
 import { usuariosApi } from '../../api/usuarios'
 import { unidadesApi } from '../../api/unidades'
 import { perfisApi } from '../../api/permissoes'
@@ -14,7 +14,10 @@ const UsuariosList = () => {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [senhaModalOpen, setSenhaModalOpen] = useState(false)
+  const [senhaUserId, setSenhaUserId] = useState(null)
   const [form] = Form.useForm()
+  const [senhaForm] = Form.useForm()
 
   const fetchUsuarios = async (searchTerm = '') => {
     setLoading(true)
@@ -83,6 +86,28 @@ const UsuariosList = () => {
     setModalOpen(false)
     setEditingUser(null)
     form.resetFields()
+  }
+
+  const handleOpenSenhaModal = (usuario) => {
+    setSenhaUserId(usuario.id)
+    senhaForm.resetFields()
+    setSenhaModalOpen(true)
+  }
+
+  const handleCloseSenhaModal = () => {
+    setSenhaModalOpen(false)
+    setSenhaUserId(null)
+    senhaForm.resetFields()
+  }
+
+  const handleChangeSenha = async (values) => {
+    try {
+      await usuariosApi.changePassword(senhaUserId, values.nova_senha)
+      message.success('Senha alterada com sucesso')
+      handleCloseSenhaModal()
+    } catch (error) {
+      message.error(getErrorMessage(error, 'Erro ao alterar senha'))
+    }
   }
 
   const handleSubmit = async (values) => {
@@ -159,6 +184,12 @@ const UsuariosList = () => {
             type="link"
             icon={<EditOutlined />}
             onClick={() => handleOpenModal(record)}
+          />
+          <Button
+            type="link"
+            icon={<KeyOutlined />}
+            onClick={() => handleOpenSenhaModal(record)}
+            title="Alterar Senha"
           />
           <Popconfirm
             title="Desativar usuário?"
@@ -309,6 +340,61 @@ const UsuariosList = () => {
                 Salvar
               </Button>
               <Button onClick={handleCloseModal}>
+                Cancelar
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Alterar Senha"
+        open={senhaModalOpen}
+        onCancel={handleCloseSenhaModal}
+        footer={null}
+        width={400}
+      >
+        <Form
+          form={senhaForm}
+          layout="vertical"
+          onFinish={handleChangeSenha}
+        >
+          <Form.Item
+            name="nova_senha"
+            label="Nova Senha"
+            rules={[
+              { required: true, message: 'Informe a nova senha' },
+              { min: 6, message: 'Mínimo 6 caracteres' },
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+
+          <Form.Item
+            name="confirmar_senha"
+            label="Confirmar Senha"
+            dependencies={['nova_senha']}
+            rules={[
+              { required: true, message: 'Confirme a senha' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('nova_senha') === value) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(new Error('As senhas não coincidem'))
+                },
+              }),
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                Alterar Senha
+              </Button>
+              <Button onClick={handleCloseSenhaModal}>
                 Cancelar
               </Button>
             </Space>
