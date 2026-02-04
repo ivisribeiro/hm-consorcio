@@ -17,6 +17,7 @@ import TabelasCreditoList from './pages/TabelasCredito'
 import AdministradorasList from './pages/Administradoras'
 import Relatorios from './pages/Relatorios'
 import Configuracoes from './pages/Configuracoes'
+import PerfisList from './pages/Perfis'
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -66,6 +67,7 @@ function App() {
 
         {/* Configuracoes */}
         <Route path="configuracoes" element={<Configuracoes />} />
+        <Route path="perfis" element={<PerfisList />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

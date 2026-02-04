@@ -86,11 +86,16 @@ const menuItems = [
         icon: <BankOutlined />,
         label: 'Administradoras',
       },
+      {
+        key: '/perfis',
+        icon: <SafetyCertificateOutlined />,
+        label: 'Perfis',
+      },
     ],
   },
   {
     key: '/configuracoes',
-    icon: <SafetyCertificateOutlined />,
+    icon: <SettingOutlined />,
     label: 'Configurações',
   },
 ]
