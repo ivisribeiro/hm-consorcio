@@ -1,4 +1,4 @@
-# Build stage
+# Build stage - Force rebuild 2026-02-05
 FROM node:20-alpine as build
 
 WORKDIR /app
