@@ -346,8 +346,8 @@ const TabelasCreditoList = () => {
                 precision={2}
                 decimalSeparator=","
                 formatter={value => {
-                  if (!value) return '';
-                  return `${value}`.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                  const num = parseFloat(value) || 0;
+                  return num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                 }}
                 parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
@@ -366,8 +366,8 @@ const TabelasCreditoList = () => {
                 precision={2}
                 decimalSeparator=","
                 formatter={value => {
-                  if (!value) return '';
-                  return `${value}`.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                  const num = parseFloat(value) || 0;
+                  return num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                 }}
                 parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
@@ -385,8 +385,8 @@ const TabelasCreditoList = () => {
                 precision={2}
                 decimalSeparator=","
                 formatter={value => {
-                  if (!value) return '';
-                  return `${value}`.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                  const num = parseFloat(value) || 0;
+                  return num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                 }}
                 parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
