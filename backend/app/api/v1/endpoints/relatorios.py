@@ -254,12 +254,10 @@ async def gerar_contrato_venda_pdf(
     if not cliente:
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
 
-    # Busca representante (do benefício ou usuário logado)
+    # Busca representante (do benefício)
     representante = None
     if beneficio.representante_id:
-        representante = db.query(Usuario).filter(Usuario.id == beneficio.representante_id).first()
-    if not representante:
-        representante = current_user
+        representante = db.query(Representante).filter(Representante.id == beneficio.representante_id).first()
 
     # Busca empresa (do benefício)
     empresa = None
