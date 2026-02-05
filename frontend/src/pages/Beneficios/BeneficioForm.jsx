@@ -4,6 +4,7 @@ import { Form, Button, Card, Row, Col, Select, Table, Radio, message, Spin, Desc
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import { beneficiosApi, tabelasCreditoApi } from '../../api/beneficios'
 import { clientesApi, unidadesApi } from '../../api/clientes'
+import { representantesApi } from '../../api/representantes'
 import { useAuth } from '../../contexts/AuthContext'
 
 const tipoBemLabels = { imovel: 'Imóvel', carro: 'Carro', moto: 'Moto' }
@@ -20,6 +21,7 @@ const BeneficioForm = () => {
   const [saving, setSaving] = useState(false)
   const [clientes, setClientes] = useState([])
   const [unidades, setUnidades] = useState([])
+  const [representantes, setRepresentantes] = useState([])
   const [tabelas, setTabelas] = useState([])
   const [selectedCliente, setSelectedCliente] = useState(null)
   const [tipoBem, setTipoBem] = useState('imovel')
@@ -40,12 +42,14 @@ const BeneficioForm = () => {
   const loadInitialData = async () => {
     setLoading(true)
     try {
-      const [clientesData, unidadesData] = await Promise.all([
+      const [clientesData, unidadesData, representantesData] = await Promise.all([
         clientesApi.list({ limit: 100 }),
         unidadesApi.list(),
+        representantesApi.list(),
       ])
       setClientes(clientesData)
       setUnidades(unidadesData)
+      setRepresentantes(representantesData)
 
       if (clienteIdParam) {
         const cliente = clientesData.find(c => c.id === parseInt(clienteIdParam))
@@ -92,7 +96,7 @@ const BeneficioForm = () => {
         cliente_id: values.cliente_id,
         tabela_credito_id: selectedTabela.id,
         unidade_id: values.unidade_id || user.unidade_id,
-        representante_id: user.id,
+        representante_id: values.representante_id,
       }
 
       await beneficiosApi.create(data)
@@ -142,6 +146,22 @@ const BeneficioForm = () => {
             <Form.Item name="unidade_id" label="Unidade" initialValue={user?.unidade_id}>
               <Select placeholder="Selecione a unidade">
                 {unidades.map(u => (<Select.Option key={u.id} value={u.id}>{u.nome}</Select.Option>))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item name="representante_id" label="Representante" rules={[{ required: true, message: 'Selecione o representante' }]}>
+              <Select
+                placeholder="Selecione o representante"
+                showSearch
+                optionFilterProp="children"
+              >
+                {representantes.map(r => (
+                  <Select.Option key={r.id} value={r.id}>{r.nome} - {r.razao_social}</Select.Option>
+                ))}
               </Select>
             </Form.Item>
           </Col>
