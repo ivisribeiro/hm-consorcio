@@ -341,9 +341,14 @@ const TabelasCreditoList = () => {
             >
               <InputNumber
                 style={{ width: '100%' }}
+                min={0}
+                step={0.01}
                 precision={2}
                 decimalSeparator=","
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.,', ',')}
+                formatter={value => {
+                  if (!value) return '';
+                  return `${value}`.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                }}
                 parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
             </Form.Item>
@@ -356,9 +361,14 @@ const TabelasCreditoList = () => {
             >
               <InputNumber
                 style={{ width: '100%' }}
+                min={0}
+                step={0.01}
                 precision={2}
                 decimalSeparator=","
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.,', ',')}
+                formatter={value => {
+                  if (!value) return '';
+                  return `${value}`.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                }}
                 parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
             </Form.Item>
@@ -371,9 +381,13 @@ const TabelasCreditoList = () => {
               <InputNumber
                 style={{ width: '100%' }}
                 min={0}
+                step={0.01}
                 precision={2}
                 decimalSeparator=","
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.,', ',')}
+                formatter={value => {
+                  if (!value) return '';
+                  return `${value}`.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                }}
                 parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
             </Form.Item>
