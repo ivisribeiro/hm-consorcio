@@ -15,6 +15,7 @@ import {
 import { beneficiosApi } from '../../api/beneficios'
 import { clientesApi } from '../../api/clientes'
 import { relatoriosApi } from '../../api/relatorios'
+import { representantesApi } from '../../api/representantes'
 
 const { Text, Title } = Typography
 const { TextArea } = Input
@@ -59,6 +60,7 @@ const BeneficioDetail = () => {
   const { id } = useParams()
   const [beneficio, setBeneficio] = useState(null)
   const [cliente, setCliente] = useState(null)
+  const [representante, setRepresentante] = useState(null)
   const [historico, setHistorico] = useState([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -100,6 +102,11 @@ const BeneficioDetail = () => {
 
       const clienteData = await clientesApi.get(beneficioData.cliente_id)
       setCliente(clienteData)
+
+      if (beneficioData.representante_id) {
+        const representanteData = await representantesApi.get(beneficioData.representante_id)
+        setRepresentante(representanteData)
+      }
     } catch (error) {
       message.error('Erro ao carregar benefício')
       navigate('/beneficios')
@@ -656,6 +663,24 @@ const BeneficioDetail = () => {
             )}
           </Col>
         </Row>
+
+        {/* Dados do Representante */}
+        {representante && (
+          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+            <Col xs={24} lg={12}>
+              <Card title="Dados do Representante" size="small" type="inner">
+                <Descriptions column={1} size="small">
+                  <Descriptions.Item label="Nome">{representante.nome}</Descriptions.Item>
+                  <Descriptions.Item label="Razão Social">{representante.razao_social}</Descriptions.Item>
+                  <Descriptions.Item label="CNPJ">{representante.cnpj}</Descriptions.Item>
+                  <Descriptions.Item label="CPF">{representante.cpf}</Descriptions.Item>
+                  <Descriptions.Item label="Telefone">{representante.telefone}</Descriptions.Item>
+                  <Descriptions.Item label="Email">{representante.email || '-'}</Descriptions.Item>
+                </Descriptions>
+              </Card>
+            </Col>
+          </Row>
+        )}
 
         <Divider />
 
