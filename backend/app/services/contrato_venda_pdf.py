@@ -361,7 +361,7 @@ class ContratoVendaPDFGenerator:
         """
 
     def _sig_vendedor_cliente_html(self):
-        rep_nome = self.representante.nome.upper() if self.representante and self.representante.nome else ''
+        rep_nome = self.representante.razao_social.upper() if self.representante and self.representante.razao_social else ''
         cliente_cpf = f"{(self.cliente.nome or '').upper()} - {self._format_cpf(self.cliente.cpf)}"
         return f"""
         <div class="sig-section">
@@ -388,9 +388,8 @@ class ContratoVendaPDFGenerator:
         r = self.representante
         e = self.empresa
 
-        empresa_nome = ''
-        if e:
-            empresa_nome = self._safe(e, 'nome_fantasia') or self._safe(e, 'razao_social')
+        # Empresa = razão social do representante
+        empresa_nome = r.razao_social if r and r.razao_social else ''
         rep_nome = r.nome if r else ''
 
         endereco_rua = self._safe(c, 'logradouro')

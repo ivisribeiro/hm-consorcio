@@ -341,8 +341,10 @@ const TabelasCreditoList = () => {
             >
               <InputNumber
                 style={{ width: '100%' }}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                parser={value => value.replace(/\./g, '')}
+                precision={2}
+                decimalSeparator=","
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.,', ',')}
+                parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
             </Form.Item>
 
@@ -354,8 +356,10 @@ const TabelasCreditoList = () => {
             >
               <InputNumber
                 style={{ width: '100%' }}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                parser={value => value.replace(/\./g, '')}
+                precision={2}
+                decimalSeparator=","
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.,', ',')}
+                parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
             </Form.Item>
 
@@ -367,8 +371,10 @@ const TabelasCreditoList = () => {
               <InputNumber
                 style={{ width: '100%' }}
                 min={0}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                parser={value => value.replace(/\./g, '')}
+                precision={2}
+                decimalSeparator=","
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.,', ',')}
+                parser={value => value.replace(/\./g, '').replace(',', '.')}
               />
             </Form.Item>
           </Space>
