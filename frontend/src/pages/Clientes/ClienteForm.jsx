@@ -447,8 +447,8 @@ const ClienteForm = () => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={8}>
-            <Form.Item name="taxa_inicial" label="Taxa Inicial (%)">
-              <Input type="number" step="0.01" />
+            <Form.Item name="taxa_inicial" label="Taxa Inicial">
+              <MoneyInput />
             </Form.Item>
           </Col>
         </Row>

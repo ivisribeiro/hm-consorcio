@@ -1,6 +1,6 @@
 import { InputNumber } from 'antd'
 
-const MoneyInput = ({ value, onChange, ...props }) => {
+const PercentInput = ({ value, onChange, ...props }) => {
   return (
     <InputNumber
       {...props}
@@ -8,16 +8,17 @@ const MoneyInput = ({ value, onChange, ...props }) => {
       onChange={onChange}
       style={{ width: '100%' }}
       min={0}
+      max={100}
       step={0.01}
       precision={2}
       decimalSeparator=","
       formatter={val => {
         const num = parseFloat(val) || 0
-        return `R$ ${num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
+        return `${num.toFixed(2).replace('.', ',')}%`
       }}
-      parser={val => val.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.')}
+      parser={val => val.replace(/%/g, '').replace(',', '.')}
     />
   )
 }
 
-export default MoneyInput
+export default PercentInput
