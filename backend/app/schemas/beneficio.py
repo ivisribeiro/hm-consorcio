@@ -16,7 +16,7 @@ class BeneficioBase(BaseModel):
     cliente_id: int
     tabela_credito_id: int
     unidade_id: int
-    representante_id: int
+    representante_id: Optional[int] = None
     consultor_id: Optional[int] = None
     empresa_id: Optional[int] = None
     observacoes: Optional[str] = None
@@ -42,7 +42,7 @@ class BeneficioStatusUpdate(BaseModel):
 class BeneficioResponse(BaseModel):
     id: int
     cliente_id: int
-    representante_id: int
+    representante_id: Optional[int] = None
     consultor_id: Optional[int] = None
     unidade_id: int
     empresa_id: Optional[int] = None

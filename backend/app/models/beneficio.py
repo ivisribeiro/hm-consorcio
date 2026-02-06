@@ -13,8 +13,8 @@ class Beneficio(Base):
     cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=False)
     cliente = relationship("Cliente", backref="beneficios")
 
-    representante_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
-    representante = relationship("Usuario", foreign_keys=[representante_id], backref="beneficios_vendidos")
+    representante_id = Column(Integer, ForeignKey("representantes.id"), nullable=True)
+    representante = relationship("Representante", backref="beneficios")
 
     consultor_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
     consultor = relationship("Usuario", foreign_keys=[consultor_id], backref="beneficios_agendados")
