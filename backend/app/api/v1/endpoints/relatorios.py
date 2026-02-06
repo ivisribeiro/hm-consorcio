@@ -249,6 +249,11 @@ async def gerar_contrato_venda_pdf(
     if not beneficio:
         raise HTTPException(status_code=404, detail="Benefício não encontrado")
 
+    # Carrega a tabela de crédito para obter valor_intermediacao
+    if beneficio.tabela_credito_id:
+        tabela_credito = db.query(TabelaCredito).filter(TabelaCredito.id == beneficio.tabela_credito_id).first()
+        beneficio.tabela_credito = tabela_credito
+
     # Busca cliente
     cliente = db.query(Cliente).filter(Cliente.id == beneficio.cliente_id).first()
     if not cliente:

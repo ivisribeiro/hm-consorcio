@@ -29,10 +29,19 @@ class ContratoVendaPDFGenerator:
         ano = self.data_atual.year
         self.numero_contrato = f"{ano}{str(beneficio.id).zfill(5)}"
 
+        # Valor da parcela
         self.valor_primeira_parcela = float(beneficio.parcela or 0)
-        valor_entrada = float(beneficio.valor_entrada or 0) if hasattr(beneficio, 'valor_entrada') and beneficio.valor_entrada else float(beneficio.valor_credito or 0) * 0.05
-        self.taxa_servico = valor_entrada - self.valor_primeira_parcela if valor_entrada > self.valor_primeira_parcela else 0
-        self.valor_adesao = self.taxa_servico + self.valor_primeira_parcela
+
+        # Valor intermediação vem da tabela de crédito
+        valor_intermediacao = 0
+        if hasattr(beneficio, 'tabela_credito') and beneficio.tabela_credito:
+            valor_intermediacao = float(beneficio.tabela_credito.valor_intermediacao or 0)
+
+        # Taxa de serviço = valor intermediação
+        self.taxa_servico = valor_intermediacao
+
+        # Valor adesão = intermediação + parcela
+        self.valor_adesao = valor_intermediacao + self.valor_primeira_parcela
 
         self.local = f"{(cliente.cidade or 'SAO PAULO').upper()} - {(cliente.estado or 'SP').upper()}"
         self.logo_b64 = self._load_logo_base64()

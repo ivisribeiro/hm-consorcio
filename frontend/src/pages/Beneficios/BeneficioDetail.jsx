@@ -850,30 +850,95 @@ const BeneficioDetail = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="perc_fundo_comum" label="% Fundo Comum" rules={[{ required: true, message: 'Obrigatório' }]}>
-                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} placeholder="Ex: 0.224" />
+              <Form.Item name="perc_fundo_comum" label="% Fundo Comum" rules={[{ required: true, message: 'Obrigatório' }]} initialValue={0}>
+                <InputNumber
+                  min={0}
+                  step={0.001}
+                  precision={3}
+                  style={{ width: '100%' }}
+                  decimalSeparator=","
+                  formatter={val => {
+                    if (val === null || val === undefined || val === '') return '0,000%'
+                    const num = parseFloat(val) || 0
+                    return `${num.toFixed(3).replace('.', ',')}%`
+                  }}
+                  parser={val => val ? parseFloat(val.replace('%', '').replace(',', '.')) || 0 : 0}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="perc_administracao" label="% Administração" rules={[{ required: true, message: 'Obrigatório' }]}>
-                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} placeholder="Ex: 0.671" />
+              <Form.Item name="perc_administracao" label="% Administração" rules={[{ required: true, message: 'Obrigatório' }]} initialValue={0}>
+                <InputNumber
+                  min={0}
+                  step={0.001}
+                  precision={3}
+                  style={{ width: '100%' }}
+                  decimalSeparator=","
+                  formatter={val => {
+                    if (val === null || val === undefined || val === '') return '0,000%'
+                    const num = parseFloat(val) || 0
+                    return `${num.toFixed(3).replace('.', ',')}%`
+                  }}
+                  parser={val => val ? parseFloat(val.replace('%', '').replace(',', '.')) || 0 : 0}
+                />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="perc_reserva" label="% Reserva" initialValue={0}>
-                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} />
+                <InputNumber
+                  min={0}
+                  step={0.001}
+                  precision={3}
+                  style={{ width: '100%' }}
+                  decimalSeparator=","
+                  formatter={val => {
+                    if (val === null || val === undefined || val === '') return '0,000%'
+                    const num = parseFloat(val) || 0
+                    return `${num.toFixed(3).replace('.', ',')}%`
+                  }}
+                  parser={val => val ? parseFloat(val.replace('%', '').replace(',', '.')) || 0 : 0}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="perc_seguro" label="% Seguro" initialValue={0}>
-                <InputNumber min={0} step={0.001} precision={3} style={{ width: '100%' }} />
+                <InputNumber
+                  min={0}
+                  step={0.001}
+                  precision={3}
+                  style={{ width: '100%' }}
+                  decimalSeparator=","
+                  formatter={val => {
+                    if (val === null || val === undefined || val === '') return '0,000%'
+                    const num = parseFloat(val) || 0
+                    return `${num.toFixed(3).replace('.', ',')}%`
+                  }}
+                  parser={val => val ? parseFloat(val.replace('%', '').replace(',', '.')) || 0 : 0}
+                />
               </Form.Item>
             </Col>
           </Row>
           <Form.Item name="valor_parcela" label="Valor da Parcela (R$)" rules={[{ required: true, message: 'Obrigatório' }]}>
-            <InputNumber min={0} step={0.01} precision={2} style={{ width: '100%' }} placeholder="Ex: 1500.00" />
+            <InputNumber
+              min={0}
+              step={0.01}
+              precision={2}
+              style={{ width: '100%' }}
+              placeholder="Ex: 1.500,00"
+              decimalSeparator=","
+              formatter={val => {
+                if (val === null || val === undefined || val === '') return 'R$ 0,00'
+                const num = parseFloat(val) || 0
+                return `R$ ${num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
+              }}
+              parser={val => {
+                if (!val) return 0
+                const cleaned = val.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.')
+                return parseFloat(cleaned) || 0
+              }}
+            />
           </Form.Item>
         </Form>
       </Modal>
