@@ -12,10 +12,15 @@ const MoneyInput = ({ value, onChange, ...props }) => {
       precision={2}
       decimalSeparator=","
       formatter={val => {
+        if (val === null || val === undefined || val === '') return 'R$ 0,00'
         const num = parseFloat(val) || 0
         return `R$ ${num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
       }}
-      parser={val => val.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.')}
+      parser={val => {
+        if (!val) return 0
+        const cleaned = val.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.')
+        return parseFloat(cleaned) || 0
+      }}
     />
   )
 }
