@@ -803,22 +803,38 @@ async def fix_beneficios_representante():
         except Exception as e:
             result["steps"].append(f"drop FK skipped: {str(e)[:50]}")
 
-        # 2. Limpa valores inválidos (seta NULL onde representante_id não existe em representantes)
+        # 2. Altera coluna para permitir NULL
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("""
+                    ALTER TABLE beneficios ALTER COLUMN representante_id DROP NOT NULL
+                """))
+                conn.commit()
+                result["steps"].append("made representante_id nullable")
+        except Exception as e:
+            result["steps"].append(f"alter column skipped: {str(e)[:50]}")
+
+        # 3. Limpa valores inválidos (seta NULL onde representante_id não existe em representantes)
         try:
             with engine.connect() as conn:
                 conn.execute(text("""
                     UPDATE beneficios SET representante_id = NULL
+                    WHERE representante_id NOT IN (SELECT id FROM representantes)
                 """))
                 conn.commit()
-                result["steps"].append("cleared all representante_id values")
+                result["steps"].append("cleared invalid representante_id values")
         except Exception as e:
             result["steps"].append(f"clear values skipped: {str(e)[:50]}")
 
-        # 3. Conta representantes
+        # 4. Conta representantes
         try:
             with engine.connect() as conn:
                 rep_count = conn.execute(text("SELECT COUNT(*) FROM representantes")).fetchone()[0]
                 result["representantes_count"] = rep_count
+
+                # Conta benefícios
+                ben_count = conn.execute(text("SELECT COUNT(*) FROM beneficios")).fetchone()[0]
+                result["beneficios_count"] = ben_count
         except Exception as e:
             result["steps"].append(f"count error: {str(e)[:50]}")
 
