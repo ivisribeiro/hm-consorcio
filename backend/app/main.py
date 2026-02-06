@@ -784,59 +784,43 @@ async def fix_beneficios_representante():
 
     result = {"steps": []}
     try:
-        with engine.connect() as conn:
-            inspector = inspect(engine)
+        inspector = inspect(engine)
 
-            # Verifica se tabela beneficios existe
-            if "beneficios" not in inspector.get_table_names():
-                result["steps"].append("beneficios table does not exist")
-                result["status"] = "error"
-                return result
+        # Verifica se tabela beneficios existe
+        if "beneficios" not in inspector.get_table_names():
+            result["steps"].append("beneficios table does not exist")
+            result["status"] = "error"
+            return result
 
-            # 1. Remove a FK antiga (se existir)
-            try:
+        # 1. Remove a FK antiga (se existir)
+        try:
+            with engine.connect() as conn:
                 conn.execute(text("""
                     ALTER TABLE beneficios DROP CONSTRAINT IF EXISTS beneficios_representante_id_fkey
                 """))
                 conn.commit()
                 result["steps"].append("dropped old FK constraint")
-            except Exception as e:
-                result["steps"].append(f"drop FK skipped: {str(e)[:50]}")
+        except Exception as e:
+            result["steps"].append(f"drop FK skipped: {str(e)[:50]}")
 
-            # 2. Limpa valores inválidos (seta NULL onde representante_id não existe em representantes)
-            try:
+        # 2. Limpa valores inválidos (seta NULL onde representante_id não existe em representantes)
+        try:
+            with engine.connect() as conn:
                 conn.execute(text("""
                     UPDATE beneficios SET representante_id = NULL
-                    WHERE representante_id IS NOT NULL
-                    AND representante_id NOT IN (SELECT id FROM representantes)
                 """))
                 conn.commit()
-                result["steps"].append("cleared invalid representante_id values")
-            except Exception as e:
-                result["steps"].append(f"clear values skipped: {str(e)[:50]}")
+                result["steps"].append("cleared all representante_id values")
+        except Exception as e:
+            result["steps"].append(f"clear values skipped: {str(e)[:50]}")
 
-            # 3. Adiciona nova FK para representantes
-            try:
-                conn.execute(text("""
-                    ALTER TABLE beneficios
-                    ADD CONSTRAINT beneficios_representante_id_fkey
-                    FOREIGN KEY (representante_id) REFERENCES representantes(id)
-                """))
-                conn.commit()
-                result["steps"].append("added new FK to representantes table")
-            except Exception as e:
-                if "already exists" in str(e).lower():
-                    result["steps"].append("FK already exists")
-                else:
-                    result["steps"].append(f"add FK error: {str(e)[:50]}")
-
-            # 4. Verifica estado final
-            columns = [col["name"] for col in inspector.get_columns("beneficios")]
-            result["beneficios_columns"] = columns
-
-            # Conta representantes
-            rep_count = conn.execute(text("SELECT COUNT(*) FROM representantes")).fetchone()[0]
-            result["representantes_count"] = rep_count
+        # 3. Conta representantes
+        try:
+            with engine.connect() as conn:
+                rep_count = conn.execute(text("SELECT COUNT(*) FROM representantes")).fetchone()[0]
+                result["representantes_count"] = rep_count
+        except Exception as e:
+            result["steps"].append(f"count error: {str(e)[:50]}")
 
         result["status"] = "success"
     except Exception as e:
