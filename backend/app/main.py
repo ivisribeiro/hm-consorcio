@@ -776,6 +776,78 @@ async def reset_database():
         return {"status": "error", "error": str(e), "steps": steps, "trace": traceback.format_exc()}
 
 
+@app.post("/debug/fix-beneficios-representante")
+async def fix_beneficios_representante():
+    """Corrige a FK representante_id na tabela beneficios (de usuarios para representantes)"""
+    from sqlalchemy import text, inspect
+    from app.core.database import engine
+
+    result = {"steps": []}
+    try:
+        with engine.connect() as conn:
+            inspector = inspect(engine)
+
+            # Verifica se tabela beneficios existe
+            if "beneficios" not in inspector.get_table_names():
+                result["steps"].append("beneficios table does not exist")
+                result["status"] = "error"
+                return result
+
+            # 1. Remove a FK antiga (se existir)
+            try:
+                conn.execute(text("""
+                    ALTER TABLE beneficios DROP CONSTRAINT IF EXISTS beneficios_representante_id_fkey
+                """))
+                conn.commit()
+                result["steps"].append("dropped old FK constraint")
+            except Exception as e:
+                result["steps"].append(f"drop FK skipped: {str(e)[:50]}")
+
+            # 2. Limpa valores inválidos (seta NULL onde representante_id não existe em representantes)
+            try:
+                conn.execute(text("""
+                    UPDATE beneficios SET representante_id = NULL
+                    WHERE representante_id IS NOT NULL
+                    AND representante_id NOT IN (SELECT id FROM representantes)
+                """))
+                conn.commit()
+                result["steps"].append("cleared invalid representante_id values")
+            except Exception as e:
+                result["steps"].append(f"clear values skipped: {str(e)[:50]}")
+
+            # 3. Adiciona nova FK para representantes
+            try:
+                conn.execute(text("""
+                    ALTER TABLE beneficios
+                    ADD CONSTRAINT beneficios_representante_id_fkey
+                    FOREIGN KEY (representante_id) REFERENCES representantes(id)
+                """))
+                conn.commit()
+                result["steps"].append("added new FK to representantes table")
+            except Exception as e:
+                if "already exists" in str(e).lower():
+                    result["steps"].append("FK already exists")
+                else:
+                    result["steps"].append(f"add FK error: {str(e)[:50]}")
+
+            # 4. Verifica estado final
+            columns = [col["name"] for col in inspector.get_columns("beneficios")]
+            result["beneficios_columns"] = columns
+
+            # Conta representantes
+            rep_count = conn.execute(text("SELECT COUNT(*) FROM representantes")).fetchone()[0]
+            result["representantes_count"] = rep_count
+
+        result["status"] = "success"
+    except Exception as e:
+        import traceback
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["trace"] = traceback.format_exc()
+
+    return result
+
+
 @app.post("/debug/seed-permissoes")
 async def seed_permissoes():
     """Popula a tabela de permissões"""
