@@ -351,7 +351,7 @@ class ContratoVendaPDFGenerator:
     # ===================== SHARED COMPONENTS =====================
 
     def _footer_html(self, page_num):
-        return f'<div class="footer"><div>Emitido em: {self.data_formatada}</div><div>Pagina {page_num} de 10</div></div>'
+        return f'<div class="footer"><div></div><div>Pagina {page_num} de 10</div></div>'
 
     def _client_info_html(self):
         c = self.cliente
