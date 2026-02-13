@@ -571,7 +571,126 @@ class FichaClientePDFGenerator:
 
         elements.append(PageBreak())
 
-    # ==================== PÁGINA 3: PROPOSTA DE ORÇAMENTO ====================
+    # ==================== PÁGINA 3: TERMO DE USO ====================
+
+    def _create_termo_uso_page(self, elements):
+        """Cria página do Termo de Uso para Análise de Perfil Financeiro"""
+        page_width = self.width - 3*cm
+
+        # Logo pequeno no topo
+        if os.path.exists(self.logo_path):
+            logo_width = 3*cm
+            logo = Image(self.logo_path, width=logo_width, height=logo_width/2.08)
+            logo.hAlign = 'CENTER'
+            elements.append(logo)
+            elements.append(Spacer(1, 0.2*cm))
+
+        # Header principal verde
+        header_table = Table(
+            [[Paragraph("<b>TERMO DE USO PARA ANÁLISE DE PERFIL FINANCEIRO PARA LINHAS DE CRÉDITO</b>", self.styles['PageHeader'])]],
+            colWidths=[page_width]
+        )
+        header_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), self.cor_verde),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(header_table)
+        elements.append(Spacer(1, 0.3*cm))
+
+        # Estilo para título de seção
+        termo_section_style = ParagraphStyle(
+            'TermoSection', fontSize=7.5, fontName='Helvetica-Bold',
+            textColor=self.cor_verde, leading=10, spaceBefore=2, spaceAfter=1
+        )
+
+        # Estilo para texto do termo
+        termo_text_style = ParagraphStyle(
+            'TermoText', fontSize=7, fontName='Helvetica',
+            alignment=TA_JUSTIFY, leading=9, spaceAfter=3
+        )
+
+        sections = [
+            ("1. Processo de análise",
+             "Estes termos de uso estabelecem os direitos e as responsabilidades do cliente e da empresa HM Capital, "
+             "no processo para as linhas de crédito para financiamentos, carta de crédito contemplada ou consórcio, "
+             "em grupos, bancos e financeiras fiscalizadas pelo Banco Central. Ao utilizar os serviços da empresa, "
+             "você concorda que está de acordo com os termos de uso e autoriza a empresa a consultar o CPF nos "
+             "órgãos de proteção ao crédito."),
+
+            ("2. Solicitação de Crédito",
+             "Na solicitação de uma linha de crédito, o cliente deve estar ciente que deve fornecer informações "
+             "precisas e atualizadas por meio de formulário de CADASTRO fornecido pela empresa. O cliente é o "
+             "único responsável pela precisão e integridade das informações fornecidas."),
+
+            ("3. Consentimento para Análise de Crédito",
+             "Ao assinar este termo, o cliente consente explicitamente que a empresa realize a análise de crédito, "
+             "incluindo a coleta, o processamento e o armazenamento de informações pessoais relevantes, como o "
+             "número de CPF (Cadastro de Pessoa Física), conforme necessário avaliar a elegibilidade do cliente "
+             "para linha de crédito solicitada."),
+
+            ("4. Verificação das Informações",
+             "A empresa reserva o direito de verificar as informações fornecidas pelo cliente com terceiros, "
+             "incluindo instituições financeiras, órgãos de crédito e outras fontes relevantes. Essa verificação "
+             "pode incluir a consulta de registros de crédito e a validação do número de CPF fornecido pelo cliente."),
+
+            ("5. Avaliação de Crédito",
+             "Com base nas informações fornecidas pelo cliente e nos resultados de verificação, a empresa realizará "
+             "uma avaliação de crédito para determinar a elegibilidade do cliente para a linha de crédito de "
+             "financiamento, consórcios, cartas de crédito contempladas e demais linhas solicitadas pelo cliente "
+             "ou oferecidas como opção viável para o cliente. A empresa reserva o direito de aceitar ou recusar "
+             "qualquer solicitação de crédito de acordo com os critérios internos."),
+
+            ("6. Privacidade e Segurança - LEI GERAL DE PROTEÇÃO DE DADOS (LGPD)",
+             "A empresa cumprirá integralmente as disposições da Lei Geral de Proteção de Dados (Lei 13.709/2018), "
+             "completa ao processamento de informações pessoais do cliente. A coleta, o processamento e o "
+             "armazenamento de dados serão realizados de acordo com as finalidades específicas de análise de "
+             "crédito e demais obrigações legais."),
+
+            ("7. Disposições Gerais - Alterações nos Termos de Uso",
+             "A empresa se reserva o direito de modificar estes Termos de Uso a qualquer momento, mediante aviso "
+             "prévio adequado ao cliente. Recomenda-se que o cliente revise regularmente os termos utilizados."),
+        ]
+
+        for title, text in sections:
+            elements.append(self._create_section_header(title, page_width))
+            elements.append(Spacer(1, 0.1*cm))
+            elements.append(Paragraph(text, termo_text_style))
+            elements.append(Spacer(1, 0.1*cm))
+
+        # Parágrafo final
+        elements.append(Spacer(1, 0.1*cm))
+        elements.append(Paragraph(
+            "Ao aceitar com o processo de análise de crédito, o cliente confirma que leu, entendeu e concorda "
+            "com estes Termos de Uso. Em caso de dúvidas ou preocupações, o cliente deve perguntar ao "
+            "representante da empresa para obter os esclarecimentos adicionais.",
+            ParagraphStyle(
+                'TermoFinal', fontSize=7, fontName='Helvetica-Bold',
+                alignment=TA_JUSTIFY, leading=9, spaceAfter=4
+            )
+        ))
+
+        elements.append(Spacer(1, 0.5*cm))
+
+        # Data e Assinatura
+        sig_data = [
+            ['DATA: _________________________', '', 'ASSINATURA DO CLIENTE: _________________________'],
+        ]
+        sig_table = Table(sig_data, colWidths=[6*cm, 2.5*cm, 9*cm])
+        sig_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (2, 0), (2, 0), 'LEFT'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(sig_table)
+
+        elements.append(PageBreak())
+
+    # ==================== PÁGINA 4: PROPOSTA DE ORÇAMENTO ====================
 
     def _create_proposta_page(self, elements):
         """Cria página de proposta de orçamento com 4 propostas"""
@@ -747,7 +866,10 @@ class FichaClientePDFGenerator:
         # Página 2: Cadastro Pessoa Física
         self._create_cadastro_page(elements)
 
-        # Página 3: Proposta de Orçamento
+        # Página 3: Termo de Uso
+        self._create_termo_uso_page(elements)
+
+        # Página 4: Proposta de Orçamento
         self._create_proposta_page(elements)
 
         # Controla qual página está sendo desenhada
