@@ -6,7 +6,6 @@ import { beneficiosApi } from '../../api/beneficios'
 import { relatoriosApi } from '../../api/relatorios'
 
 const { Title, Text } = Typography
-const { Option } = Select
 
 const Relatorios = () => {
   const [clientes, setClientes] = useState([])
@@ -228,17 +227,14 @@ const Relatorios = () => {
               value={selectedClienteIdFicha}
               loading={loading}
               allowClear
-              filterOption={(input, option) =>
-                option.children.toLowerCase().includes(input.toLowerCase())
-              }
+              optionFilterProp="label"
               size="large"
-            >
-              {clientes.map(cliente => (
-                <Option key={cliente.id} value={cliente.id}>
-                  {cliente.nome} - {formatCPF(cliente.cpf)}
-                </Option>
-              ))}
-            </Select>
+              options={clientes.map(cliente => ({
+                key: cliente.id,
+                value: cliente.id,
+                label: `${cliente.nome} - ${formatCPF(cliente.cpf)}`,
+              }))}
+            />
           </Col>
           <Col xs={24} md={8}>
             <div style={{ display: 'flex', alignItems: 'flex-end', height: '100%' }}>
@@ -300,17 +296,14 @@ const Relatorios = () => {
               value={selectedClienteId}
               loading={loading}
               allowClear
-              filterOption={(input, option) =>
-                option.children.toLowerCase().includes(input.toLowerCase())
-              }
+              optionFilterProp="label"
               size="large"
-            >
-              {clientes.map(cliente => (
-                <Option key={cliente.id} value={cliente.id}>
-                  {cliente.nome} - {formatCPF(cliente.cpf)}
-                </Option>
-              ))}
-            </Select>
+              options={clientes.map(cliente => ({
+                key: cliente.id,
+                value: cliente.id,
+                label: `${cliente.nome} - ${formatCPF(cliente.cpf)}`,
+              }))}
+            />
           </Col>
           <Col xs={24} md={12}>
             <Text strong>2. Selecione o Benefício:</Text>
@@ -323,17 +316,14 @@ const Relatorios = () => {
               loading={loadingBeneficios}
               allowClear
               disabled={!selectedClienteId}
-              filterOption={(input, option) =>
-                option.children.toLowerCase().includes(input.toLowerCase())
-              }
+              optionFilterProp="label"
               size="large"
-            >
-              {beneficiosFiltrados.map(beneficio => (
-                <Option key={beneficio.id} value={beneficio.id}>
-                  {tipoBemLabels[beneficio.tipo_bem] || beneficio.tipo_bem} - {formatCurrency(beneficio.valor_credito)} - {beneficio.grupo || 'Sem grupo'}
-                </Option>
-              ))}
-            </Select>
+              options={beneficiosFiltrados.map(beneficio => ({
+                key: beneficio.id,
+                value: beneficio.id,
+                label: `${tipoBemLabels[beneficio.tipo_bem] || beneficio.tipo_bem} - ${formatCurrency(beneficio.valor_credito)} - ${beneficio.grupo || 'Sem grupo'}`,
+              }))}
+            />
           </Col>
         </Row>
 
