@@ -579,37 +579,40 @@ class FichaClientePDFGenerator:
 
         # Logo pequeno no topo
         if os.path.exists(self.logo_path):
-            logo_width = 3*cm
+            logo_width = 3.5*cm
             logo = Image(self.logo_path, width=logo_width, height=logo_width/2.08)
             logo.hAlign = 'CENTER'
             elements.append(logo)
-            elements.append(Spacer(1, 0.2*cm))
+            elements.append(Spacer(1, 0.3*cm))
 
         # Header principal verde
         header_table = Table(
-            [[Paragraph("<b>TERMO DE USO PARA ANÁLISE DE PERFIL FINANCEIRO PARA LINHAS DE CRÉDITO</b>", self.styles['PageHeader'])]],
+            [[Paragraph("<b>TERMO DE USO PARA ANÁLISE DE PERFIL FINANCEIRO<br/>PARA LINHAS DE CRÉDITO</b>",
+                ParagraphStyle('TermoHeader', fontSize=12, alignment=TA_CENTER,
+                    textColor=colors.white, fontName='Helvetica-Bold', leading=15)
+            )]],
             colWidths=[page_width]
         )
         header_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), self.cor_verde),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ]))
         elements.append(header_table)
-        elements.append(Spacer(1, 0.3*cm))
+        elements.append(Spacer(1, 0.5*cm))
 
         # Estilo para título de seção
         termo_section_style = ParagraphStyle(
-            'TermoSection', fontSize=7.5, fontName='Helvetica-Bold',
-            textColor=self.cor_verde, leading=10, spaceBefore=2, spaceAfter=1
+            'TermoSection', fontSize=10, fontName='Helvetica-Bold',
+            textColor=self.cor_verde, leading=13, spaceBefore=4, spaceAfter=2
         )
 
         # Estilo para texto do termo
         termo_text_style = ParagraphStyle(
-            'TermoText', fontSize=7, fontName='Helvetica',
-            alignment=TA_JUSTIFY, leading=9, spaceAfter=3
+            'TermoText', fontSize=9.5, fontName='Helvetica',
+            alignment=TA_JUSTIFY, leading=13, spaceAfter=4
         )
 
         sections = [
@@ -655,34 +658,33 @@ class FichaClientePDFGenerator:
         ]
 
         for title, text in sections:
-            elements.append(self._create_section_header(title, page_width))
-            elements.append(Spacer(1, 0.1*cm))
+            elements.append(Paragraph(f"<b>{title}</b>", termo_section_style))
             elements.append(Paragraph(text, termo_text_style))
-            elements.append(Spacer(1, 0.1*cm))
+            elements.append(Spacer(1, 0.15*cm))
 
         # Parágrafo final
-        elements.append(Spacer(1, 0.1*cm))
+        elements.append(Spacer(1, 0.2*cm))
         elements.append(Paragraph(
             "Ao aceitar com o processo de análise de crédito, o cliente confirma que leu, entendeu e concorda "
             "com estes Termos de Uso. Em caso de dúvidas ou preocupações, o cliente deve perguntar ao "
             "representante da empresa para obter os esclarecimentos adicionais.",
             ParagraphStyle(
-                'TermoFinal', fontSize=7, fontName='Helvetica-Bold',
-                alignment=TA_JUSTIFY, leading=9, spaceAfter=4
+                'TermoFinal', fontSize=9.5, fontName='Helvetica-Bold',
+                alignment=TA_JUSTIFY, leading=13, spaceAfter=6
             )
         ))
 
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 1.5*cm))
 
         # Data e Assinatura
         sig_data = [
-            ['DATA: _________________________', '', 'ASSINATURA DO CLIENTE: _________________________'],
+            ['DATA: ___________________________', '', 'ASSINATURA DO CLIENTE: ___________________________'],
         ]
-        sig_table = Table(sig_data, colWidths=[6*cm, 2.5*cm, 9*cm])
+        sig_table = Table(sig_data, colWidths=[7*cm, 3.5*cm, 7*cm])
         sig_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
             ('ALIGN', (2, 0), (2, 0), 'LEFT'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
             ('TOPPADDING', (0, 0), (-1, -1), 4),
         ]))
