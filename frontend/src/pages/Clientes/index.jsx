@@ -46,13 +46,23 @@ const ClientesList = () => {
     fetchClientes(1, search, value)
   }
 
-  const handleDelete = async (id) => {
+  const handleDesativar = async (id) => {
     try {
       await clientesApi.delete(id)
       message.success('Cliente desativado com sucesso')
-      fetchClientes(pagination.current, search)
+      fetchClientes(pagination.current, search, filtroAtivo)
     } catch (error) {
       message.error('Erro ao desativar cliente')
+    }
+  }
+
+  const handleExcluir = async (id) => {
+    try {
+      await clientesApi.deletePermanente(id)
+      message.success('Cliente excluído permanentemente')
+      fetchClientes(pagination.current, search, filtroAtivo)
+    } catch (error) {
+      message.error(error.response?.data?.detail || 'Erro ao excluir cliente')
     }
   }
 
@@ -109,12 +119,24 @@ const ClientesList = () => {
             icon={<EditOutlined />}
             onClick={() => navigate(`/clientes/${record.id}/editar`)}
           />
-          <Popconfirm
-            title="Desativar cliente?"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button type="link" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          {record.ativo ? (
+            <Popconfirm
+              title="Desativar este cliente?"
+              onConfirm={() => handleDesativar(record.id)}
+            >
+              <Button type="link" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          ) : (
+            <Popconfirm
+              title="Excluir permanentemente?"
+              description="Esta ação não pode ser desfeita."
+              onConfirm={() => handleExcluir(record.id)}
+              okText="Excluir"
+              okButtonProps={{ danger: true }}
+            >
+              <Button type="link" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },

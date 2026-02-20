@@ -24,6 +24,10 @@ export const clientesApi = {
   delete: async (id) => {
     await apiClient.delete(`/clientes/${id}`)
   },
+
+  deletePermanente: async (id) => {
+    await apiClient.delete(`/clientes/${id}/permanente`)
+  },
 }
 
 export const utilsApi = {

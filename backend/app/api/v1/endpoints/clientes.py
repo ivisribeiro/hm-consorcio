@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.usuario import Usuario
 from app.models.cliente import Cliente
+from app.models.beneficio import Beneficio
 from app.schemas.cliente import ClienteCreate, ClienteUpdate, ClienteResponse, ClienteListResponse
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
@@ -142,6 +143,35 @@ async def delete_cliente(
         )
 
     cliente.ativo = False
+    db.commit()
+
+    return None
+
+
+@router.delete("/{cliente_id}/permanente", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_cliente_permanente(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Exclui um cliente permanentemente do banco de dados"""
+    cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
+
+    if not cliente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente não encontrado"
+        )
+
+    # Verifica se tem benefícios vinculados
+    beneficios_count = db.query(Beneficio).filter(Beneficio.cliente_id == cliente_id).count()
+    if beneficios_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cliente possui {beneficios_count} benefício(s) vinculado(s). Remova os benefícios antes de excluir."
+        )
+
+    db.delete(cliente)
     db.commit()
 
     return None
