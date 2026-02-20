@@ -17,7 +17,7 @@ async def list_clientes(
     limit: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
     unidade_id: Optional[int] = None,
-    ativo: Optional[bool] = True,
+    ativo: Optional[bool] = None,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):

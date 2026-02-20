@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Table, Button, Input, Space, Card, Tag, message, Popconfirm } from 'antd'
+import { Table, Button, Input, Space, Card, Tag, message, Popconfirm, Select } from 'antd'
 import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
 import { clientesApi } from '../../api/clientes'
 
@@ -9,16 +9,23 @@ const ClientesList = () => {
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
+  const [filtroAtivo, setFiltroAtivo] = useState('true')
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 })
 
-  const fetchClientes = async (page = 1, searchTerm = '') => {
+  const fetchClientes = async (page = 1, searchTerm = '', ativo = filtroAtivo) => {
     setLoading(true)
     try {
-      const data = await clientesApi.list({
+      const params = {
         skip: (page - 1) * pagination.pageSize,
         limit: pagination.pageSize,
         search: searchTerm || undefined,
-      })
+      }
+      if (ativo !== 'todos') {
+        params.ativo = ativo === 'true'
+      } else {
+        params.ativo = ''
+      }
+      const data = await clientesApi.list(params)
       setClientes(data)
       setPagination(prev => ({ ...prev, current: page, total: data.length }))
     } catch (error) {
@@ -33,7 +40,12 @@ const ClientesList = () => {
   }, [])
 
   const handleSearch = () => {
-    fetchClientes(1, search)
+    fetchClientes(1, search, filtroAtivo)
+  }
+
+  const handleFiltroAtivoChange = (value) => {
+    setFiltroAtivo(value)
+    fetchClientes(1, search, value)
   }
 
   const handleDelete = async (id) => {
@@ -124,13 +136,23 @@ const ClientesList = () => {
           </Button>
         }
       >
-        <Space style={{ marginBottom: 16 }}>
+        <Space style={{ marginBottom: 16 }} wrap>
           <Input
             placeholder="Buscar por nome, CPF ou telefone"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onPressEnter={handleSearch}
             style={{ width: 300 }}
+          />
+          <Select
+            value={filtroAtivo}
+            onChange={handleFiltroAtivoChange}
+            style={{ width: 140 }}
+            options={[
+              { value: 'true', label: 'Ativos' },
+              { value: 'false', label: 'Inativos' },
+              { value: 'todos', label: 'Todos' },
+            ]}
           />
           <Button icon={<SearchOutlined />} onClick={handleSearch}>
             Buscar
