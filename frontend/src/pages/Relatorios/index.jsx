@@ -35,7 +35,7 @@ const Relatorios = () => {
   const loadClientes = async () => {
     setLoading(true)
     try {
-      const data = await clientesApi.list()
+      const data = await clientesApi.list({ limit: 100 })
       setClientes(data)
     } catch (error) {
       message.error('Erro ao carregar clientes')
@@ -232,7 +232,7 @@ const Relatorios = () => {
               options={clientes.map(cliente => ({
                 key: cliente.id,
                 value: cliente.id,
-                label: `${cliente.nome} - ${formatCPF(cliente.cpf)}`,
+                label: `${cliente.nome} - ${formatCPF(cliente.cpf)}${cliente.ativo === false ? ' (Inativo)' : ''}`,
               }))}
             />
           </Col>
@@ -301,7 +301,7 @@ const Relatorios = () => {
               options={clientes.map(cliente => ({
                 key: cliente.id,
                 value: cliente.id,
-                label: `${cliente.nome} - ${formatCPF(cliente.cpf)}`,
+                label: `${cliente.nome} - ${formatCPF(cliente.cpf)}${cliente.ativo === false ? ' (Inativo)' : ''}`,
               }))}
             />
           </Col>

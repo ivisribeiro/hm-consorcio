@@ -22,8 +22,6 @@ const ClientesList = () => {
       }
       if (ativo !== 'todos') {
         params.ativo = ativo === 'true'
-      } else {
-        params.ativo = ''
       }
       const data = await clientesApi.list(params)
       setClientes(data)
