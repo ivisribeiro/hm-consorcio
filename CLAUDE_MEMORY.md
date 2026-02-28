@@ -209,11 +209,13 @@ npm run dev
 - `backend/app/static/images/logo-capital-brasil.png` - Logo Capital Brasil (contrato, termo)
 - `backend/app/static/images/logo-hm-capital.png` - Logo HM Capital (ficha de atendimento)
 
-## Deploy (Render.com)
+## Deploy (Railway)
+
+**Tudo no Railway. Deploy automático ao push em `main`.**
 
 ### URLs de Produção
 - **Frontend**: https://frontend-production-f134.up.railway.app
-- **Backend API**: https://hm-consorcio-api.onrender.com
+- **Backend API**: https://backend-production-0217.up.railway.app
 - **GitHub**: https://github.com/ivisribeiro/hm-consorcio
 
 ### Credenciais de Acesso (Produção)
