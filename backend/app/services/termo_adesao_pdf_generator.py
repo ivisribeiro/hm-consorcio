@@ -34,8 +34,8 @@ class TermoAdesaoPDFGenerator:
         self.cor_header = colors.HexColor('#1a1a1a')
         self.cor_section_bg = colors.HexColor('#f5f5f5')
 
-        # Caminho do logo (Capital Banq - mesmo do contrato de venda)
-        self.logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'logo-capital-banq.png')
+        # Caminho do logo (Capital Brasil - mesmo do contrato de venda)
+        self.logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'logo-capital-brasil.png')
 
         # Data atual
         self.data_atual = datetime.now()
@@ -140,7 +140,7 @@ class TermoAdesaoPDFGenerator:
 
     def _create_header(self, elements):
         """Cabeçalho do documento"""
-        # Logo Capital Banq (proporção 1.44:1)
+        # Logo Capital Brasil (proporção 1.44:1)
         if os.path.exists(self.logo_path):
             logo_width = 3.5*cm
             logo_height = logo_width / 1.44

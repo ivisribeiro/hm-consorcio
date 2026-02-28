@@ -1,6 +1,6 @@
 """
 Gerador de PDF - Contrato de Venda
-Capital Banq - Documento de 10 paginas
+Capital Brasil - Documento de 10 paginas
 Layout moderno com cards arredondados via WeasyPrint
 """
 import os
@@ -49,7 +49,7 @@ class ContratoVendaPDFGenerator:
     # ===================== HELPERS =====================
 
     def _load_logo_base64(self):
-        logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'logo-capital-banq.png')
+        logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'images', 'logo-capital-brasil.png')
         if os.path.exists(logo_path):
             with open(logo_path, 'rb') as f:
                 return base64.b64encode(f.read()).decode('utf-8')
@@ -423,7 +423,7 @@ class ContratoVendaPDFGenerator:
             <div class="divider"></div>
 
             <p class="intro">
-                Por este instrumento particular de CONTRATO, de um lado, a empresa CAPITAL BANQ SOLUCOES FINANCEIRAS, pessoa juridica de direito
+                Por este instrumento particular de CONTRATO, de um lado, a empresa CAPITAL BRASIL SOLUCOES FINANCEIRAS, pessoa juridica de direito
                 privado, inscrita no CNPJ sob o no 60.093.496/0001-17, com sede na Avenida Paulista, 1636, Conj 1504 - Bela Vista, Sao Paulo - SP, CEP 01310-20,
                 e-mail atendimento@capitalbanq.com.br, neste ato representado por seu representante legal, doravante denominado simplesmente
                 "CONTRATADA", e, de outro lado, o(a) cliente abaixo identificado(a), doravante denominado(a) simplesmente "CONTRATANTE", tem entre si
@@ -507,7 +507,7 @@ class ContratoVendaPDFGenerator:
 
             <div class="pill-row"><div class="pill">RECIBO E FORMA DO PAGAMENTO INICIAL</div></div>
             <section class="card">
-                <p class="receipt-text">Recebemos a importancia de <b>{self._format_currency(self.taxa_servico)}</b> na forma abaixo descrita, sendo este valor referente a intermediacao e prestacao de servicos de consultoria da Capital Banq, aos quais declara o(a) CONTRATANTE ciente de que nao se trata de Cota contemplada, Financiamento ou Emprestimo.</p>
+                <p class="receipt-text">Recebemos a importancia de <b>{self._format_currency(self.taxa_servico)}</b> na forma abaixo descrita, sendo este valor referente a intermediacao e prestacao de servicos de consultoria da Capital Brasil, aos quais declara o(a) CONTRATANTE ciente de que nao se trata de Cota contemplada, Financiamento ou Emprestimo.</p>
                 <div class="sig-label">Assinatura do(a) contratante</div>
                 <div class="sig-line"></div>
                 <p class="receipt-text">Recebemos a importancia de <b>{self._format_currency(b.parcela)}</b>, referente a parcela inicial do plano escolhido pela CONTRATANTE. A CONTRATADA se compromete a promover a contratacao da cota adequada na administradora de consorcio e efetuar a sua adesao sem reservas.</p>
@@ -563,8 +563,8 @@ class ContratoVendaPDFGenerator:
 
             <div class="clause-card">
                 <div class="clause-title">3. MANDATO</div>
-                <p class="clause-text">3.1. O(A) CONTRATANTE, para fins de execucao deste CONTRATO, confere poderes a empresa CONTRATADA (Capital Banq), para escolha de uma administradora de consorcios, devidamente autorizada pelo poder publico, que melhor atenda a seus objetivos. Outorga amplos poderes de representacao perante quaisquer administradoras de consorcios, podendo fazer cotacoes e levantamentos, assinar propostas, contratos, adendos, aditivos, enviar documentos, fazer pesquisas cadastrais, prestar declaracoes e informacoes para administradoras com as quais negociar em seu nome, transigir, celebrar contratos, oferecer lances, comparecer em assembleias e nelas votar.</p>
-                <p class="clause-text">3.2. O(A) CONTRATANTE autoriza ao Capital Banq, as administradoras de consorcios parceiras, de forma direta ou atraves de seus prestadores de servicos, a formar banco de dados com suas informacoes para a execucao deste contrato, consultar SRC do Banco Central do Brasil, SPC, Serasa e similares.</p>
+                <p class="clause-text">3.1. O(A) CONTRATANTE, para fins de execucao deste CONTRATO, confere poderes a empresa CONTRATADA (Capital Brasil), para escolha de uma administradora de consorcios, devidamente autorizada pelo poder publico, que melhor atenda a seus objetivos. Outorga amplos poderes de representacao perante quaisquer administradoras de consorcios, podendo fazer cotacoes e levantamentos, assinar propostas, contratos, adendos, aditivos, enviar documentos, fazer pesquisas cadastrais, prestar declaracoes e informacoes para administradoras com as quais negociar em seu nome, transigir, celebrar contratos, oferecer lances, comparecer em assembleias e nelas votar.</p>
+                <p class="clause-text">3.2. O(A) CONTRATANTE autoriza ao Capital Brasil, as administradoras de consorcios parceiras, de forma direta ou atraves de seus prestadores de servicos, a formar banco de dados com suas informacoes para a execucao deste contrato, consultar SRC do Banco Central do Brasil, SPC, Serasa e similares.</p>
             </div>
 
             <div class="clause-card">
@@ -604,12 +604,12 @@ class ContratoVendaPDFGenerator:
 
             <div class="clause-card">
                 <div class="clause-title">7. PAGAMENTO</div>
-                <p class="clause-text">7.1. O pagamento referente ao item RECIBO se refere a servicos de consultoria da CONTRATADA, que devera ser efetuado somente atraves de boleto bancario, pix ou depositos feitos diretamente para o Capital Banq. Jamais poderao ser efetuados pagamentos para colaboradores ou supostos cobradores que nao seja o proprio Capital Banq. O valor referente a parcela do consorcio sera repassado a Administradora apos a sua aprovacao.</p>
+                <p class="clause-text">7.1. O pagamento referente ao item RECIBO se refere a servicos de consultoria da CONTRATADA, que devera ser efetuado somente atraves de boleto bancario, pix ou depositos feitos diretamente para o Capital Brasil. Jamais poderao ser efetuados pagamentos para colaboradores ou supostos cobradores que nao seja o proprio Capital Brasil. O valor referente a parcela do consorcio sera repassado a Administradora apos a sua aprovacao.</p>
             </div>
 
             <div class="clause-card">
                 <div class="clause-title">8. PRAZO DO CONTRATO</div>
-                <p class="clause-text">8.1. Os direitos e obrigacoes iniciam a partir do pagamento total a titulo de taxa de servico da Capital Banq e vigera ate a data da contemplacao e faturamento do bem ou servicos.</p>
+                <p class="clause-text">8.1. Os direitos e obrigacoes iniciam a partir do pagamento total a titulo de taxa de servico da Capital Brasil e vigera ate a data da contemplacao e faturamento do bem ou servicos.</p>
                 <p class="clause-text">8.1.1. Na hipotese de desistencia, pelo(a) CONTRATANTE, apos a participacao em assembleia ordinaria de distribuicao de bens, no grupo de consorcio e antes de sua contemplacao, o presente instrumento vigera ate a contemplacao da cota desistente, sendo obrigacao da CONTRATADA, acompanhar e conferir o calculo dos valores a serem restituidos ao(a) CONTRATANTE.</p>
             </div>
 
@@ -749,12 +749,12 @@ class ContratoVendaPDFGenerator:
             <div class="section-title">TERMO DE CONTRATACAO DE SERVICOS DE CONSULTORIA FINANCEIRA</div>
 
             <div class="decl-card">
-                <p>A Capital Banq atua exclusivamente na consultoria financeira para aquisicao de consorcios nao contemplados, facilitando a conexao entre o cliente e a administradora de consorcios. Essa consultoria e realizada por meio de seus consultores credenciados, que sao pessoas juridicas autonomas e possuem liberdade para cobrar pelos servicos de atendimento e vendas prestadas.</p>
-                <p>O(a) PROPONENTE declara, conforme a lei, que preencheu uma proposta de consultoria financeira com a Capital Banq para adquirir um consorcio nao contemplado e esta ciente de que deve aguardar a contemplacao por meio de sorteio pela Loteria Federal ou lance, conforme o regulamento geral de consorcios.</p>
-                <p>O(a) PROPONENTE esta ciente de que sua proposta sera comprovada pelo setor de qualidade da Capital Banq e, somente apos validacao, seu contrato sera apresentado a administradora e incluido no grupo de consorcio.</p>
+                <p>A Capital Brasil atua exclusivamente na consultoria financeira para aquisicao de consorcios nao contemplados, facilitando a conexao entre o cliente e a administradora de consorcios. Essa consultoria e realizada por meio de seus consultores credenciados, que sao pessoas juridicas autonomas e possuem liberdade para cobrar pelos servicos de atendimento e vendas prestadas.</p>
+                <p>O(a) PROPONENTE declara, conforme a lei, que preencheu uma proposta de consultoria financeira com a Capital Brasil para adquirir um consorcio nao contemplado e esta ciente de que deve aguardar a contemplacao por meio de sorteio pela Loteria Federal ou lance, conforme o regulamento geral de consorcios.</p>
+                <p>O(a) PROPONENTE esta ciente de que sua proposta sera comprovada pelo setor de qualidade da Capital Brasil e, somente apos validacao, seu contrato sera apresentado a administradora e incluido no grupo de consorcio.</p>
                 <p>O(a) PROPONENTE declara ter lido e compreendido todas as clausulas do regulamento do consorcio, em conformidade com a Lei no 11.795/2008, incluindo suas obrigacoes, taxas e formas de contemplacao, e que nao restam duvidas sobre a negociacao assumida.</p>
                 <p>O(a) PROPONENTE autoriza que a contratacao de uma consultoria financeira para consorcio nao e obrigatoria, mas aceita livremente os termos e condicoes contratuais propostas.</p>
-                <p>O(a) PROPONENTE tambem declara estar ciente de que os valores pagos na adesao referem-se a inclusao no grupo de consorcio, a taxa administrativa da administradora e a taxa de consultoria pela prestacao de servicos da Capital Banq.</p>
+                <p>O(a) PROPONENTE tambem declara estar ciente de que os valores pagos na adesao referem-se a inclusao no grupo de consorcio, a taxa administrativa da administradora e a taxa de consultoria pela prestacao de servicos da Capital Brasil.</p>
             </div>
 
             <div class="spacer-lg"></div>
@@ -771,13 +771,13 @@ class ContratoVendaPDFGenerator:
             <div class="section-title">TERMO DE CONTRATACAO DE SERVICOS DE CONSULTORIA FINANCEIRA</div>
 
             <div class="decl-card">
-                <p>A Capital Banq atua como consultora financeira, promovendo a assessoria na aquisicao de consorcios nao contemplados entre o(a) CONTRATANTE e a Administradora de Consorcios, por meio de seus consultores financeiros devidamente credenciados, que possuem independencia para realizar a cobranca pelos servicos prestados de atendimento e vendas.</p>
-                <p>O(a) PROPONENTE declara, sob as penas da lei, que preencheu uma proposta de consultoria financeira junto a Capital Banq com o objetivo de adquirir uma cota de consorcio nao contemplada. O(a) PROPONENTE compreende que a contemplacao ocorrera em conformidade com os termos do regulamento geral da Administradora, seja por sorteio automatico ou por lance, e se obrigara a efetuar o pagamento das parcelas rigorosamente em dia.</p>
-                <p>O(a) PROPONENTE esta ciente de que uma proposta sera comprovada pela Administradora de Consorcios e pela Capital Banq, que podera recusar o caso nao atender as exigencias legais e as politicas internas da Administradora.</p>
-                <p>O(a) PROPONENTE declara estar ciente de que o cancelamento do consorcio apos a facilidade da proposta podera gerar prejuizos financeiros a Capital Banq e aos consultores responsaveis pela intermediacao, comprometendo-se a reparar eventuais perdas e danos, incluindo a garantia da comissao de corretagem para o consultor envolvido na revenda da cota.</p>
+                <p>A Capital Brasil atua como consultora financeira, promovendo a assessoria na aquisicao de consorcios nao contemplados entre o(a) CONTRATANTE e a Administradora de Consorcios, por meio de seus consultores financeiros devidamente credenciados, que possuem independencia para realizar a cobranca pelos servicos prestados de atendimento e vendas.</p>
+                <p>O(a) PROPONENTE declara, sob as penas da lei, que preencheu uma proposta de consultoria financeira junto a Capital Brasil com o objetivo de adquirir uma cota de consorcio nao contemplada. O(a) PROPONENTE compreende que a contemplacao ocorrera em conformidade com os termos do regulamento geral da Administradora, seja por sorteio automatico ou por lance, e se obrigara a efetuar o pagamento das parcelas rigorosamente em dia.</p>
+                <p>O(a) PROPONENTE esta ciente de que uma proposta sera comprovada pela Administradora de Consorcios e pela Capital Brasil, que podera recusar o caso nao atender as exigencias legais e as politicas internas da Administradora.</p>
+                <p>O(a) PROPONENTE declara estar ciente de que o cancelamento do consorcio apos a facilidade da proposta podera gerar prejuizos financeiros a Capital Brasil e aos consultores responsaveis pela intermediacao, comprometendo-se a reparar eventuais perdas e danos, incluindo a garantia da comissao de corretagem para o consultor envolvido na revenda da cota.</p>
                 <p>O(a) PROPONENTE confirma ter lido e compreende todas as clausulas do regulamento do consorcio, bem como as obrigacoes e direitos relacionados a contratacao, nao restando duvidas sobre a negociacao assumida, conforme previsto na Lei no 11.795/2008.</p>
                 <p>O(a) PROPONENTE autoriza que a contratacao de uma consultoria financeira nao e obrigatoria para a aquisicao de consorcio, mas aceita voluntariamente os termos e condicoes contratuais ou pactuados.</p>
-                <p>O(a) PROPONENTE concorda que, dos valores pagos na taxa de adesao, a comissao de corretagem sera repassada aos consultores de consorcios, autorizando desde ja o pagamento sem que isso gere qualquer prejuizo a Capital Banq.</p>
+                <p>O(a) PROPONENTE concorda que, dos valores pagos na taxa de adesao, a comissao de corretagem sera repassada aos consultores de consorcios, autorizando desde ja o pagamento sem que isso gere qualquer prejuizo a Capital Brasil.</p>
             </div>
 
             <div class="red-warning">LEIA COM ATENCAO ANTES DE ASSINAR.</div>
@@ -804,16 +804,16 @@ class ContratoVendaPDFGenerator:
             </div>
 
             <div class="quest-card">
-                <p>Voce contratou um servico de Consultora com a Capital Banq para participar de um consorcio nao contemplado? __________</p>
+                <p>Voce contratou um servico de Consultora com a Capital Brasil para participar de um consorcio nao contemplado? __________</p>
                 <p>Voce confirma que possuiu capacidade financeira para arcar com as prestacoes do seu consorcio? __________</p>
                 <p>Voce esta ciente que o valor da sua parcela mensal e de {self._format_currency(self.beneficio.parcela)}? __________</p>
-                <p>Tomou ciencia que a empresa Capital Banq nao administra consorcios, apenas promove a consultoria? __________</p>
+                <p>Tomou ciencia que a empresa Capital Brasil nao administra consorcios, apenas promove a consultoria? __________</p>
                 <p>Voce tem ciencia que o consorcio nao esta contemplado? __________</p>
                 <p>Foi informado(a) de que a contemplacao ocorrera somente por sorteio ou lance fixo ou lance Livre? __________</p>
                 <p>Lhe foi feita alguma promessa de contemplacao, garantia de contemplacao em determinado prazo, mediante determinado valor de lance ou vantagens extras? __________</p>
                 <p>Ocorrendo a rescisao pelo CONTRATANTE, este declara ciente que nao tera direito a restituicao ao valor pago a titulo de assessoria, visto que, alem dos servicos prestados ate a data da rescisao, a CONTRATADA permanecera na obrigacao do acompanhamento da cota ate a contemplacao do(a) CONTRATANTE, junto a administradora de consorcio. __________</p>
                 <p>Voce leu com atencao todo o contrato de intermediacao para adesao a grupo de consorcio e assinou concordando com as clausulas e condicoes somente depois da leitura? __________</p>
-                <p>Voce escolheu participar de um consorcio intermediado pela Capital Banq e administrado por Administradoras de Consorcios autorizadas e fiscalizadas pelo Banco Central? __________</p>
+                <p>Voce escolheu participar de um consorcio intermediado pela Capital Brasil e administrado por Administradoras de Consorcios autorizadas e fiscalizadas pelo Banco Central? __________</p>
             </div>
 
             <p class="clause-text">Promovemos a intermediacao entre o interessado em consorcio e a administradora legalmente autorizadas pelo Banco Central, atraves de seus corretores pessoa Juridica autonomos credenciados.</p>

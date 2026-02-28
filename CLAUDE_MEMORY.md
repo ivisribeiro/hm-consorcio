@@ -206,7 +206,7 @@ npm run dev
 - `frontend/public/images/logo-white-bg.jpg` - Logo fundo branco (Login, PDFs)
 - `frontend/public/images/logo-dark-bg.jpg` - Logo fundo escuro (Sidebar)
 - `backend/app/static/images/logo-white-bg.jpg` - Logo HM Capital para PDFs
-- `backend/app/static/images/logo-capital-banq.png` - Logo Capital Banq (contrato, termo)
+- `backend/app/static/images/logo-capital-brasil.png` - Logo Capital Brasil (contrato, termo)
 - `backend/app/static/images/logo-hm-capital.png` - Logo HM Capital (ficha de atendimento)
 
 ## Deploy (Render.com)
@@ -221,9 +221,9 @@ npm run dev
 - **Senha**: admin123
 
 ## Última Atualização
-- Data: 2026-02-04
-- Última tarefa: Tabela auxiliar de faixas de parcelas no benefício (BeneficioFaixa)
-- Status: Sistema em produção (v11)
+- Data: 2026-02-27
+- Última tarefa: Substituição de "Capital Banq" por "Capital Brasil" nos PDFs (contrato e termo) + nova logo
+- Status: Sistema em produção (v12)
 
 ### Correções do Deploy (2026-01-28)
 1. **Tabela `perfis` vazia** - Inseridos perfis padrão via endpoint `/debug/fix-usuarios`
@@ -259,6 +259,7 @@ npm run dev
 | 2026-02-04 | Tabelas de Crédito: novo campo valor_intermediacao (model, schema, CSV import, frontend) |
 | 2026-02-04 | Termo de Adesão: logo Capital Banq, grids alinhados, representante com razão social/CNPJ |
 | 2026-02-04 | Tabela auxiliar BeneficioFaixa: faixas de parcelas editáveis no BeneficioDetail, integração com PDF Termo |
+| 2026-02-27 | Substituição de "Capital Banq" por "Capital Brasil" em todos os PDFs (contrato + termo) e troca da logo |
 
 ---
 
@@ -282,7 +283,7 @@ npm run dev
 4. Contrato de Venda usa WeasyPrint (HTML/CSS), cor teal (#178AA0), layout com cards arredondados
 5. Módulo de Contratos foi removido - usar PDF generator diretamente
 6. WeasyPrint requer dependências de sistema no Dockerfile (pango, cairo, gdk-pixbuf)
-7. Termo de Adesão e Contrato usam logo Capital Banq; Ficha usa logo HM Capital
+7. Termo de Adesão e Contrato usam logo Capital Brasil; Ficha usa logo HM Capital
 8. Tabela de Crédito tem campo `valor_intermediacao` (Numeric 12,2, default 0)
 9. Valor Adesão no contrato = taxa_servico (intermediação) + primeira parcela
 10. BeneficioFaixa: tabela auxiliar com faixas de parcelas (parcela_inicio, parcela_fim, perc_fundo_comum, perc_administracao, perc_reserva, perc_seguro, valor_parcela)
