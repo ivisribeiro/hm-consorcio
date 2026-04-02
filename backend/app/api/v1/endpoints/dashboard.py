@@ -229,18 +229,24 @@ async def get_vendas_mensal(
 
     data_inicio = datetime.utcnow() - relativedelta(months=meses)
 
-    # SQLite não tem date_trunc, usar strftime
+    # Compatível com SQLite (strftime) e PostgreSQL (to_char)
+    from app.core.config import settings
+    if settings.DATABASE_URL.startswith("sqlite"):
+        mes_expr = func.strftime('%Y-%m', Beneficio.created_at)
+    else:
+        mes_expr = func.to_char(Beneficio.created_at, 'YYYY-MM')
+
     beneficios = db.query(
-        func.strftime('%Y-%m', Beneficio.created_at).label('mes'),
+        mes_expr.label('mes'),
         func.count(Beneficio.id).label('quantidade'),
         func.sum(Beneficio.valor_credito).label('valor')
     ).filter(
         Beneficio.created_at >= data_inicio,
         Beneficio.ativo == True
     ).group_by(
-        func.strftime('%Y-%m', Beneficio.created_at)
+        mes_expr
     ).order_by(
-        func.strftime('%Y-%m', Beneficio.created_at)
+        mes_expr
     ).all()
 
     # Formatar labels dos meses
