@@ -37,7 +37,7 @@ class FichaClientePDFGenerator:
 
         # Caminho do logo
         self.logo_path = os.path.join(
-            os.path.dirname(__file__), '..', 'static', 'images', 'logo-hm-capital.png'
+            os.path.dirname(__file__), '..', 'static', 'images', 'logo-capital-brasil.png'
         )
 
         # Data atual
@@ -617,7 +617,7 @@ class FichaClientePDFGenerator:
 
         sections = [
             ("1. Processo de análise",
-             "Estes termos de uso estabelecem os direitos e as responsabilidades do cliente e da empresa HM Capital, "
+             "Estes termos de uso estabelecem os direitos e as responsabilidades do cliente e da empresa Capital Brasil, "
              "no processo para as linhas de crédito para financiamentos, carta de crédito contemplada ou consórcio, "
              "em grupos, bancos e financeiras fiscalizadas pelo Banco Central. Ao utilizar os serviços da empresa, "
              "você concorda que está de acordo com os termos de uso e autoriza a empresa a consultar o CPF nos "

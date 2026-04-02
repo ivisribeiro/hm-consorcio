@@ -26,7 +26,7 @@ class TermoAdesaoPDFGenerator:
         self._setup_styles()
 
         # Dados da empresa
-        self.empresa_nome = "HM CAPITAL"
+        self.empresa_nome = "CAPITAL BRASIL"
         self.empresa_cnpj = empresa.cnpj if empresa and empresa.cnpj else "00.000.000/0001-00"
         self.empresa_endereco = empresa.endereco if empresa and hasattr(empresa, 'endereco') else "São Paulo - SP"
 

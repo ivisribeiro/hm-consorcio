@@ -176,7 +176,7 @@ class ClientePDFGenerator:
             logo.hAlign = 'CENTER'
             elements.append(logo)
         else:
-            elements.append(Paragraph("HM CAPITAL", self.styles['ClienteName']))
+            elements.append(Paragraph("CAPITAL BRASIL", self.styles['ClienteName']))
 
         elements.append(Spacer(1, 4*cm))
 
@@ -525,7 +525,7 @@ class ClientePDFGenerator:
 
         elements.append(Paragraph("1. Processo de análise", terms_style))
         elements.append(Paragraph(
-            "Estes termos de uso estabelecem os direitos e as responsabilidades do cliente e da empresa HM Capital, no "
+            "Estes termos de uso estabelecem os direitos e as responsabilidades do cliente e da empresa Capital Brasil, no "
             "processo para as linhas de crédito para de financiamentos, carta de crédito contemplada ou consórcio, em "
             "grupos, bancos e financeiras fiscalizadas pelo Banco Central. Ao utilizar os serviços da empresa, você "
             "concorda que está de acordo com os termos de uso e autoriza a empresa a consultar o CPF nos órgãos de "
@@ -612,7 +612,7 @@ class ClientePDFGenerator:
         header_table = Table(
             [[Paragraph("<b>PROPOSTA<br/>DE ORÇAMENTO</b>", ParagraphStyle(
                 'PropostaHeader', fontSize=20, textColor=colors.white, alignment=TA_LEFT, leading=24, fontName='Helvetica-Bold'
-            )), Paragraph("<b>HM CAPITAL</b>", ParagraphStyle(
+            )), Paragraph("<b>CAPITAL BRASIL</b>", ParagraphStyle(
                 'PropostaHeaderRight', fontSize=14, textColor=colors.white, alignment=TA_RIGHT, fontName='Helvetica-Bold'
             ))]],
             colWidths=[10*cm, page_width - 10*cm]
