@@ -27,8 +27,12 @@ class BeneficioCreate(BeneficioBase):
 
 
 class BeneficioUpdate(BaseModel):
-    observacoes: Optional[str] = None
+    representante_id: Optional[int] = None
+    unidade_id: Optional[int] = None
+    empresa_id: Optional[int] = None
+    tabela_credito_id: Optional[int] = None
     administradora_id: Optional[int] = None
+    observacoes: Optional[str] = None
     grupo: Optional[str] = None
     cota: Optional[str] = None
 
