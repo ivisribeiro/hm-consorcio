@@ -747,7 +747,7 @@ class FichaClientePDFGenerator:
             content = [
                 [Paragraph(f"<b>Proposta {num_romano}</b>  ({'&nbsp;' * 35})", title_style)],
                 [Paragraph("Crédito Pretendido: ____________________", content_style)],
-                [Paragraph("Entrada Sugerida: ____________________", content_style)],
+                [Paragraph("Taxa Inicial: ____________________", content_style)],
                 [Paragraph("Parcelas a partir: ____________________", content_style)],
                 [Paragraph("Prazos Aproximados: ____________________", content_style)],
             ]

@@ -188,7 +188,11 @@ async def gerar_termo_adesao_pdf(
 
     # Busca representante (modelo Representante com razão social)
     representante = None
-    if beneficio.unidade_id:
+    if beneficio.representante_id:
+        representante = db.query(Representante).filter(
+            Representante.id == beneficio.representante_id
+        ).first()
+    if not representante and beneficio.unidade_id:
         representante = db.query(Representante).filter(
             Representante.unidade_id == beneficio.unidade_id,
             Representante.ativo == True

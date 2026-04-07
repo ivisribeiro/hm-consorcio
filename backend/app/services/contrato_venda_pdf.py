@@ -680,6 +680,25 @@ class ContratoVendaPDFGenerator:
                 <p class="clause-text">14.1. Para dirimir quaisquer questoes oriundas do presente CONTRATO, as partes elegem o foro da Comarca de Sao Paulo, Estado de Sao Paulo, com renuncia expressa de qualquer outro, por mais privilegiado que seja ou venha a ser.</p>
             </div>
 
+            <div class="clause-card">
+                <div class="clause-title">15. DO USO DE IMAGEM E SOM</div>
+                <p class="clause-text">Para fins de transparencia, seguranca juridica e garantia da qualidade na prestacao dos servicos de intermediacao, fica estabelecido que poderao ser realizadas gravacoes de audio e/ou imagem durante todo o processo de atendimento, desde o primeiro contato ate a formalizacao do presente contrato.</p>
+                <p class="clause-text"><b>15.1 – Da Finalidade e Base Legal</b></p>
+                <p class="clause-text">As gravacoes mencionadas na clausula anterior tem como objetivo registrar, de forma fiel, todas as informacoes prestadas ao cliente, assegurando a plena ciencia acerca do produto contratado, suas condicoes, direitos, deveres e eventuais limitacoes, bem como resguardar as partes em caso de duvidas, divergencias ou necessidade de comprovacao futura.</p>
+                <p class="clause-text">O tratamento dos dados pessoais decorrentes dessas gravacoes encontra fundamento nas bases legais previstas na legislacao aplicavel, especialmente para a execucao do contrato, cumprimento de obrigacao legal e legitimo interesse das partes.</p>
+                <p class="clause-text"><b>15.2 – Do Consentimento, Tratamento e Confidencialidade dos Dados</b></p>
+                <p class="clause-text">Ao prosseguir com o atendimento e a celebracao do presente contrato, o cliente declara estar ciente e de acordo com a realizacao das referidas gravacoes, autorizando o tratamento de seus dados pessoais, inclusive imagem e voz, exclusivamente para as finalidades aqui descritas.</p>
+                <p class="clause-text">As informacoes coletadas serao tratadas em conformidade com a Lei Geral de Protecao de Dados Pessoais (LGPD), sendo garantidos os principios da finalidade, adequacao, necessidade, seguranca e confidencialidade, bem como o respeito aos direitos do titular dos dados, nos termos da legislacao vigente.</p>
+            </div>
+
+            {self._footer_html(5)}
+        </div>
+        """
+
+    def _page_6_html(self):
+        data_extenso = self._get_data_extenso()
+        return f"""
+        <div class="page">
             <div class="spacer-lg"></div>
             <p class="text-center" style="font-size:8.5pt;">SAO PAULO-SP, {data_extenso}.</p>
             <div class="spacer-lg"></div>
@@ -720,11 +739,11 @@ class ContratoVendaPDFGenerator:
             <div class="spacer"></div>
             {self._client_info_html()}
 
-            {self._footer_html(5)}
+            {self._footer_html(6)}
         </div>
         """
 
-    def _page_6_html(self):
+    def _page_7_html(self):
         return f"""
         <div class="page">
             <div class="spacer-lg"></div>
@@ -739,11 +758,11 @@ class ContratoVendaPDFGenerator:
             <div class="spacer-lg"></div>
             {self._client_info_html()}
 
-            {self._footer_html(6)}
+            {self._footer_html(7)}
         </div>
         """
 
-    def _page_7_html(self):
+    def _page_8_html(self):
         return f"""
         <div class="page">
             <div class="section-title">TERMO DE CONTRATACAO DE SERVICOS DE CONSULTORIA FINANCEIRA</div>
@@ -760,11 +779,11 @@ class ContratoVendaPDFGenerator:
             <div class="spacer-lg"></div>
             {self._client_info_html()}
 
-            {self._footer_html(7)}
+            {self._footer_html(8)}
         </div>
         """
 
-    def _page_8_html(self):
+    def _page_9_html(self):
         data_extenso = self._get_data_extenso()
         return f"""
         <div class="page">
@@ -789,11 +808,11 @@ class ContratoVendaPDFGenerator:
 
             {self._sig_vendedor_cliente_html()}
 
-            {self._footer_html(8)}
+            {self._footer_html(9)}
         </div>
         """
 
-    def _page_9_html(self):
+    def _page_10_html(self):
         return f"""
         <div class="page">
             <div class="section-title">QUESTIONARIO DE CHECAGEM</div>
@@ -821,11 +840,11 @@ class ContratoVendaPDFGenerator:
 
             {self._sig_vendedor_cliente_html()}
 
-            {self._footer_html(9)}
+            {self._footer_html(10)}
         </div>
         """
 
-    def _page_10_html(self):
+    def _page_11_html(self):
         data_extenso = self._get_data_extenso()
         return f"""
         <div class="page">
@@ -848,7 +867,7 @@ class ContratoVendaPDFGenerator:
 
             {self._sig_vendedor_cliente_html()}
 
-            {self._footer_html(10)}
+            {self._footer_html(11)}
         </div>
         """
 
@@ -874,6 +893,7 @@ class ContratoVendaPDFGenerator:
             {self._page_8_html()}
             {self._page_9_html()}
             {self._page_10_html()}
+            {self._page_11_html()}
         </body>
         </html>
         """
