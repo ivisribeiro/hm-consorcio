@@ -51,7 +51,23 @@ const BeneficioForm = () => {
       setUnidades(unidadesData)
       setRepresentantes(representantesData)
 
-      if (clienteIdParam) {
+      if (isEdit) {
+        const beneficio = await beneficiosApi.get(id)
+        form.setFieldsValue({
+          cliente_id: beneficio.cliente_id,
+          unidade_id: beneficio.unidade_id,
+          representante_id: beneficio.representante_id,
+        })
+        setTipoBem(beneficio.tipo_bem)
+        const cliente = clientesData.find(c => c.id === beneficio.cliente_id)
+        if (cliente) setSelectedCliente(cliente)
+        if (beneficio.tabela_credito_id) {
+          const tabelasData = await tabelasCreditoApi.list({ tipo_bem: beneficio.tipo_bem })
+          setTabelas(tabelasData)
+          const tabela = tabelasData.find(t => t.id === beneficio.tabela_credito_id)
+          if (tabela) setSelectedTabela(tabela)
+        }
+      } else if (clienteIdParam) {
         const cliente = clientesData.find(c => c.id === parseInt(clienteIdParam))
         if (cliente) {
           setSelectedCliente(cliente)
@@ -99,11 +115,16 @@ const BeneficioForm = () => {
         representante_id: values.representante_id,
       }
 
-      await beneficiosApi.create(data)
-      message.success('Benefício criado com sucesso!')
+      if (isEdit) {
+        await beneficiosApi.update(id, data)
+        message.success('Benefício atualizado com sucesso!')
+      } else {
+        await beneficiosApi.create(data)
+        message.success('Benefício criado com sucesso!')
+      }
       navigate('/beneficios')
     } catch (error) {
-      message.error(error.response?.data?.detail || 'Erro ao criar benefício')
+      message.error(error.response?.data?.detail || `Erro ao ${isEdit ? 'atualizar' : 'criar'} benefício`)
     } finally {
       setSaving(false)
     }
@@ -221,7 +242,7 @@ const BeneficioForm = () => {
 
         <div style={{ marginTop: 24, textAlign: 'right' }}>
           <Button type="primary" htmlType="submit" loading={saving} icon={<SaveOutlined />} size="large" disabled={!selectedTabela}>
-            Criar Benefício
+            {isEdit ? 'Salvar Alterações' : 'Criar Benefício'}
           </Button>
         </div>
       </Form>

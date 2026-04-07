@@ -52,6 +52,7 @@ function App() {
         <Route path="beneficios" element={<BeneficiosList />} />
         <Route path="beneficios/novo" element={<BeneficioForm />} />
         <Route path="beneficios/:id" element={<BeneficioDetail />} />
+        <Route path="beneficios/:id/editar" element={<BeneficioForm />} />
 
         {/* Cadastros */}
         <Route path="usuarios" element={<UsuariosList />} />

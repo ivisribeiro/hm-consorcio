@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Table, Button, Card, Tag, Space, Select, message } from 'antd'
-import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
+import { Table, Button, Card, Tag, Space, Select, Input, message } from 'antd'
+import { PlusOutlined, EyeOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons'
 import { beneficiosApi } from '../../api/beneficios'
 
 const statusColors = {
@@ -43,6 +43,7 @@ const BeneficiosList = () => {
   const [beneficios, setBeneficios] = useState([])
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({ status: null, tipo_bem: null })
+  const [searchText, setSearchText] = useState('')
 
   const fetchBeneficios = async () => {
     setLoading(true)
@@ -72,7 +73,10 @@ const BeneficiosList = () => {
     {
       title: 'Ações', key: 'actions',
       render: (_, record) => (
-        <Button type="link" icon={<EyeOutlined />} onClick={() => navigate(`/beneficios/${record.id}`)} />
+        <Space>
+          <Button type="link" icon={<EyeOutlined />} onClick={() => navigate(`/beneficios/${record.id}`)} />
+          <Button type="link" icon={<EditOutlined />} onClick={() => navigate(`/beneficios/${record.id}/editar`)} />
+        </Space>
       ),
     },
   ]
@@ -83,6 +87,14 @@ const BeneficiosList = () => {
       extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/beneficios/novo')}>Novo Benefício</Button>}
     >
       <Space style={{ marginBottom: 16 }}>
+        <Input
+          placeholder="Pesquisar por cliente"
+          prefix={<SearchOutlined />}
+          allowClear
+          style={{ width: 250 }}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
         <Select placeholder="Filtrar por Status" allowClear style={{ width: 200 }} onChange={(val) => setFilters(prev => ({ ...prev, status: val }))}>
           {Object.entries(statusLabels).map(([key, label]) => (<Select.Option key={key} value={key}>{label}</Select.Option>))}
         </Select>
@@ -90,7 +102,12 @@ const BeneficiosList = () => {
           {Object.entries(tipoBemLabels).map(([key, label]) => (<Select.Option key={key} value={key}>{label}</Select.Option>))}
         </Select>
       </Space>
-      <Table columns={columns} dataSource={beneficios} rowKey="id" loading={loading} />
+      <Table
+        columns={columns}
+        dataSource={beneficios.filter(b => !searchText || (b.cliente_nome || '').toLowerCase().includes(searchText.toLowerCase()))}
+        rowKey="id"
+        loading={loading}
+      />
     </Card>
   )
 }
