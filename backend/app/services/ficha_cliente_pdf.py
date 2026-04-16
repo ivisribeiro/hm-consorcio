@@ -37,7 +37,7 @@ class FichaClientePDFGenerator:
 
         # Caminho do logo
         self.logo_path = os.path.join(
-            os.path.dirname(__file__), '..', 'static', 'images', 'logo-capital-brasil.png'
+            os.path.dirname(__file__), '..', 'static', 'images', 'logo-hm-capital.png'
         )
 
         # Data atual
@@ -734,7 +734,7 @@ class FichaClientePDFGenerator:
         # 4 Propostas em grid 2x2
         half_width = (page_width - 0.5*cm) / 2
 
-        def make_proposta(num_romano):
+        def make_proposta(num_romano, label_entrada="Taxa Inicial"):
             title_style = ParagraphStyle(
                 'PropTitle', fontSize=11, fontName='Helvetica-Bold',
                 alignment=TA_LEFT, textColor=self.cor_verde, leading=14
@@ -747,7 +747,7 @@ class FichaClientePDFGenerator:
             content = [
                 [Paragraph(f"<b>Proposta {num_romano}</b>  ({'&nbsp;' * 35})", title_style)],
                 [Paragraph("Crédito Pretendido: ____________________", content_style)],
-                [Paragraph("Taxa Inicial: ____________________", content_style)],
+                [Paragraph(f"{label_entrada}: ____________________", content_style)],
                 [Paragraph("Parcelas a partir: ____________________", content_style)],
                 [Paragraph("Prazos Aproximados: ____________________", content_style)],
             ]
@@ -762,7 +762,7 @@ class FichaClientePDFGenerator:
             return t
 
         # Linha 1 de propostas
-        row1 = Table([[make_proposta('I'), make_proposta('II')]], colWidths=[half_width, half_width])
+        row1 = Table([[make_proposta('I', label_entrada="Entrada"), make_proposta('II', label_entrada="Entrada")]], colWidths=[half_width, half_width])
         row1.setStyle(TableStyle([
             ('BOX', (0, 0), (0, 0), 1, self.cor_dourada),
             ('BOX', (1, 0), (1, 0), 1, self.cor_dourada),
